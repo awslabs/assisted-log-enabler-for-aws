@@ -31,12 +31,18 @@ region = os.environ['AWS_REGION']
 
 def org_account_grab():
     """Function to list account inside of AWS Organizations"""
-    OrgAccountIdList: list = []
-    org_account_list = organizations.list_accounts()
-    for accounts in org_account_list['Accounts']:
-        OrgAccountIdList.append(accounts['Id'])
-    get_organization_id = organizations.describe_organization()
-    organization_id = get_organization_id['Organization']['Id']
+    try:
+        OrgAccountIdList: list = []
+        org_account_list = organizations.list_accounts()
+        for accounts in org_account_list['Accounts']:
+            OrgAccountIdList.append(accounts['Id'])
+        get_organization_id = organizations.describe_organization()
+        organization_id = get_organization_id['Organization']['Id']
+    except Exception as exception_handle:
+        logging.error(exception_handle)
+        logging.error("Multi account mode is only for accounts using AWS Organizations.")
+        logging.error("Please run the Assisted Log Enabler in single account mode to turn on AWS Logs.")
+        exit()
     return OrgAccountIdList, organization_id
 
 
