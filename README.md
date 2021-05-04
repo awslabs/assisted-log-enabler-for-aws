@@ -121,6 +121,26 @@ python3 assisted_log_enabler.py --single_account
 ```
 
 
+### Logging
+A log file containing the detailed output of actions will be placed in the root directory of the Assited Log Enabler for AWS tool. The format of the file will be ALE_<timestamp>.log
+
+Sample output within the log file:
+```
+2021-02-23 05:31:54,207 - INFO - Creating a list of VPCs without Flow Logs on in region us-west-2.
+2021-02-23 05:31:54,208 - INFO - DescribeVpcs API Call
+2021-02-23 05:31:54,679 - INFO - List of VPCs found within account 111122223333, region us-west-2:
+2021-02-23 05:31:54,679 - INFO - DescribeFlowLogs API Call
+2021-02-23 05:31:54,849 - INFO - List of VPCs found within account 111122223333, region us-west-2 WITHOUT VPC Flow Logs:
+2021-02-23 05:31:54,849 - INFO - Activating logs for VPCs that do not have them turned on.
+2021-02-23 05:31:54,849 - INFO - If all VPCs have Flow Logs turned on, you will get an MissingParameter error. That is normal.
+2021-02-23 05:31:54,849 - INFO - CreateFlowLogs API Call
+2021-02-23 05:31:54,944 - ERROR - An error occurred (MissingParameter) when calling the CreateFlowLogs operation: The request must include the ResourceIds parameter. Add the required parameter and retry the request.
+2021-02-23 05:31:54,946 - INFO - Checking to see if CloudTrail is on, and will activate if needed.
+2021-02-23 05:31:54,946 - INFO - DescribeTrails API Call
+2021-02-23 05:31:54,983 - INFO - There is a CloudTrail trail active. No action needed.
+2021-02-23 05:31:54,984 - INFO - Turning on audit and authenticator logging for EKS clusters in region af-south-1.
+```
+
 ### Current Restrictions
 * Currently, only the VPC Flow Logs can be turned on by the multi-account version.
    * Looking to add multi-account CloudTrail check in the next update.
