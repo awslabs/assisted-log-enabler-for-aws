@@ -98,6 +98,26 @@ optional arguments:
                     option.
 ```
 
+#### Step-by-Step Instructions (for running in AWS CloudShell, single account mode)
+1. Log into the AWS Console of the account you want to run the Assisted Log Enabler.
+   * Ensure that the principal being used to log into the AWS Console has the permissions [above](https://github.com/awslabs/assisted-log-enabler-for-aws#permissions).
+2. Click on the icon for AWS Cloudshell next to the search bar.
+   * Ensure that you're in a region where AWS CloudShell is currently available.
+3. Once the session begins, download the Assisted Log Enabler within the AWS CloudShell session.
+```
+git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
+```
+4. Unzip the file, and change the directory to the unzipped folder:
+```
+unzip assisted-log-enabler-for-aws-main.zip
+cd assisted-log-enabler-for-aws-main
+```
+5. Run the following command to run the Assisted Log Enabler in single account mode:
+```
+python3 assisted_log_enabler.py --single_account
+```
+
+
 ### Current Restrictions
 * Currently, only the VPC Flow Logs can be turned on by the multi-account version.
    * Looking to add multi-account CloudTrail check in the next update.
