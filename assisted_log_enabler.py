@@ -61,9 +61,9 @@ def assisted_log_enabler():
     event = 'event'
     context = 'context'
     if args.single_account:
-        ale_single_account.lambda_handler(event, context)
+        ALE_single_account.lambda_handler(event, context)
     elif args.multi_account:
-        ale_multi_account.lambda_handler(event, context)
+        ALE_multi_account.lambda_handler(event, context)
     else:
         print("No valid option selected. Please run with -h to display valid options.")
 
