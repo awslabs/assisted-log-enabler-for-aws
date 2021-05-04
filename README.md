@@ -14,6 +14,7 @@ Assisted Log Enabler (ALE) is designed to ease the customer burden of learning h
 
 ## Diagram
 The following is a simple diagram on how Assisted Log Enabler works in a single account, in order to turn on logging for customers.
+
 ![Alt text](diagrams/assisted_log_enabler.png)
 
 ## Prerequesites
@@ -39,15 +40,17 @@ Additionally, if running from within a AWS Lambda function, the function will ne
 
 ### Workflow Details
 The following are the details of what happens within the Assisted Log Enabler workflow:
-* A bucket is created within the customer's account.
+* An Amazon S3 bucket is created within the customer's account.
 * A Lifecycle Policy is created for the bucket, with the following parameters:
-   * Converts files to Glacier-tier storage after 90 days
+   * Converts files to Intelligent-Tiering storage after 90 days
    * Deletes files after 365 days
-* VPCs are checked to see if flow logs are turned on or off
-* For VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created
-   * VPC Flow Logs version 2, 3, 4, and 5 fields are all enabled
-* CloudTrail service is checked to see there is at least one CloudTrail configured
-* If no trail is configured, one is created and configured to log to the bucket created
+* Block Public Access is explicitly set to On for the S3 bucket created.
+* VPCs are checked to see if flow logs are turned on or off.
+* For VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created.
+   * Amazon VPC Flow Logs version 2, 3, 4, and 5 fields are all enabled.
+* AWS CloudTrail service is checked to see there is at least one CloudTrail configured.
+* If no trail is configured, one is created and configured to log to the bucket created.
+* If EKS Clusters exist, audit & authenticator logs are turned on.
 
 
 ### Running the Code
