@@ -44,13 +44,13 @@ The following are the details of what happens within the Assisted Log Enabler wo
 * A Lifecycle Policy is created for the bucket, with the following parameters:
    * Converts files to Intelligent-Tiering storage after 90 days
    * Deletes files after 365 days
-* Block Public Access is explicitly set to On for the S3 bucket created.
+* Block Public Access is explicitly set to On for the S3 bucket created. (Single Account only as of this release)
 * VPCs are checked to see if flow logs are turned on or off.
 * For VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created.
    * Amazon VPC Flow Logs version 2, 3, 4, and 5 fields are all enabled.
-* AWS CloudTrail service is checked to see there is at least one CloudTrail configured.
-* If no trail is configured, one is created and configured to log to the bucket created.
-* If EKS Clusters exist, audit & authenticator logs are turned on.
+* AWS CloudTrail service is checked to see there is at least one CloudTrail configured. (Single Account only as of this release)
+* If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
+* If EKS Clusters exist, audit & authenticator logs are turned on. (Single Account only as of this release)
 
 
 ### Running the Code
