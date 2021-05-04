@@ -1,0 +1,76 @@
+#// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#// SPDX-License-Identifier: Apache-2.0
+# Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+# Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+# This sample template is for creating an IAM Role within child accounts, for the purpose of running Assisted Log Enabler across a multi-account environment.
+
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Creates the baseline IAM Role and Policy, for use with Snitch across multiple accounts.
+Parameters:
+  SnitchPolicyName:
+    Description: Please name the policy that will be used with the Snitch IAM Role.
+    Type: String
+    Default: Snitch_IAM_Policy
+  SnitchRoleName:
+    Description: Please name the Snitch IAM Role.
+    Type: String
+    Default: Snitch_IAM_Role
+  SourceAccountNumber:
+    Description: Please provide the source account that Snitch will be running from.
+    Type: String
+  OrgId:
+    Description: Please provide the AWS Organization ID (e.g. o-abcdefg123)
+    Type: String
+
+
+
+Resources:
+  SnitchPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Ref SnitchPolicyName
+      Path: /
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogDelivery
+              - ec2:CreateFlowLogs
+              - ec2:DescribeVpcs
+              - s3:PutLifecycleConfiguration
+              - ec2:DescribeFlowLogs
+              - s3:PutBucketPolicy
+              - s3:CreateBucket
+              - s3:GetBucketPolicy
+              - cloudtrail:DescribeTrails
+              - cloudtrail:CreateTrail
+              - s3:PutObject
+              - cloudtrail:StartLogging
+              - eks:UpdateClusterConfig
+              - eks:ListClusters
+            Resource: '*'
+            Condition:
+              StringEquals:
+                'aws:PrincipalOrgId': !Ref OrgId
+
+  SnitchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref SnitchRoleName
+      Description: Role to be assumed for running Snitch across a multi-account environment.
+      ManagedPolicyArns:
+        - Ref: SnitchPolicy
+      MaxSessionDuration: 3600
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: 
+              - !Ref SourceAccountNumber
+            Action:
+              - sts:AssumeRole

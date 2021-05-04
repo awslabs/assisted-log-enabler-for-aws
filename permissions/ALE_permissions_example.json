@@ -1,0 +1,35 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+// Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+// Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "SnitchPolicy1",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogDelivery",
+                "ec2:CreateFlowLogs",
+                "ec2:DescribeVpcs",
+                "s3:PutLifecycleConfiguration",
+                "ec2:DescribeFlowLogs",
+                "s3:PutBucketPolicy",
+                "s3:CreateBucket",
+                "s3:GetBucketPolicy",
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:CreateTrail",
+                "s3:PutObject",
+                "cloudtrail:StartLogging",
+                "eks:UpdateClusterConfig",
+                "eks:ListClusters"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "<enter_account_number_here>"
+                }
+            }
+        }
+    ]
+}
