@@ -1,4 +1,4 @@
-# Assisted Log Enabler - Find resources that are not logging, and turn them on.
+# Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
 This script is for customers who do not have logging turned on for various services, and lack knowledge of best practices and/or how to turn them on.
 
 With this script, logging is turned on automatically for the various AWS Services for a customer:
@@ -10,16 +10,16 @@ With this script, logging is turned on automatically for the various AWS Service
 ## Use Case
 There are customers of AWS who sometimes do not have logging turned on. When no logs are available, the ability to assist customers with analysis becomes limited, to the point that performing analysis may not be possible. Additionally, there are customers who use AWS that may not have the full technical expertise of how to set up logging for the various AWS services.
 
-Assisted Log Enabler (ALE) is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. ALE performs the work of creating an S3 bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. When this is performed, the customer can be assured that logging within their AWS environment is active, in order to investigate future (and possibly ongoing) security incidents.
+Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an S3 bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. When this is performed, the customer can be assured that logging within their AWS environment is active, in order to investigate future (and possibly ongoing) security incidents.
 
 ## Diagram
-The following is a simple diagram on how Assisted Log Enabler works in a single account, in order to turn on logging for customers.
+The following is a simple diagram on how Assisted Log Enabler for AWS works in a single account, in order to turn on logging for customers.
 
 ![Alt text](diagrams/assisted_log_enabler.png)
 
 ## Prerequesites
 ### Permissions
-The following permissions are needed within AWS IAM for Assisted Log Enabler to run:
+The following permissions are needed within AWS IAM for Assisted Log Enabler for AWS to run:
 ```
 "ec2:DescribeVpcs",
 "ec2:DescribeFlowLogs",
@@ -39,7 +39,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler to 
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
 
 ### Workflow Details
-The following are the details of what happens within the Assisted Log Enabler workflow:
+The following are the details of what happens within the Assisted Log Enabler for AWS workflow:
 * An Amazon S3 bucket is created within the customer's account.
 * A Lifecycle Policy is created for the bucket, with the following parameters:
    * Converts files to Intelligent-Tiering storage after 90 days
