@@ -6,6 +6,7 @@ With this script, logging is turned on automatically for the various AWS Service
 * CloudTrail (Single Account Only)
 * EKS Audit and Authenticator Logs (Single Account Only)
 * S3 Access Logs (future release)
+* NEW! Route 53 Query Logs (Single Account Only)
 
 ## Use Case
 There are customers of AWS who sometimes do not have logging turned on. When no logs are available, the ability to assist customers with analysis becomes limited, to the point that performing analysis may not be possible. Additionally, there are customers who use AWS that may not have the full technical expertise of how to set up logging for the various AWS services.
@@ -34,7 +35,10 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "cloudtrail:CreateTrail",
 "cloudtrail:DescribeTrails",
 "eks:UpdateClusterConfig",
-"eks:ListClusters"
+"eks:ListClusters",
+"route53resolver:ListResolverQueryLogConfigAssociations",
+"route53resolver:CreateResolverQueryLogConfig",
+"route53resolver:AssociateResolverQueryLogConfig"
 ```
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
 
@@ -51,10 +55,11 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * AWS CloudTrail service is checked to see there is at least one CloudTrail configured. (Single Account only as of this release)
 * If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
 * If EKS Clusters exist, audit & authenticator logs are turned on. (Single Account only as of this release)
+* NEW! Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
 
 
 ### Running the Code
-The code in it's current form can be ran inside the following:
+The code in its current form can be ran inside the following:
 * AWS CloudShell (preferred)
 * AWS Lambda
 
