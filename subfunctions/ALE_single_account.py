@@ -47,12 +47,17 @@ def create_bucket():
         account_number = sts.get_caller_identity()["Account"]
         logging.info("Creating bucket in %s" % account_number)
         logging.info("CreateBucket API Call")
-        logging_bucket_dict = s3.create_bucket(
-            Bucket="aws-log-collection-" + account_number + "-" + region,
-            CreateBucketConfiguration={
-                'LocationConstraint': region
-            }
-        )
+        if region == 'us-east-1':
+            logging_bucket_dict = s3.create_bucket(
+                Bucket="aws-log-collection-" + account_number + "-" + region
+            )
+        else:
+            logging_bucket_dict = s3.create_bucket(
+                Bucket="aws-log-collection-" + account_number + "-" + region,
+                CreateBucketConfiguration={
+                    'LocationConstraint': region
+                }
+            )
         logging.info("Bucket Created.")
         logging.info("Setting lifecycle policy.")
         logging.info("PutBucketLifecycleConfiguration API Call")
@@ -220,12 +225,64 @@ def eks_logging(region_list):
             logging.error(exception_handle)
 
 
+# 6. Turn on Route 53 Query Logging.
+def route_53_query_logs(region_list, account_number):
+    """Function to turn on Route 53 Query Logs for VPCs"""
+    for aws_region in region_list:
+        logging.info("Turning on Route 53 Query Logging on for VPCs in region " + aws_region + ".")
+        ec2 = boto3.client('ec2', region_name=aws_region)
+        route53resolver = boto3.client('route53resolver', region_name=aws_region)
+        try:
+            VPCList: list = []
+            QueryLogList: list = []
+            logging.info("DescribeVpcs API Call")
+            vpcs = ec2.describe_vpcs()
+            for vpc_id in vpcs["Vpcs"]:
+                VPCList.append(vpc_id["VpcId"])
+            logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + ":")
+            print(VPCList)
+            logging.info("ListResolverQueryLogConfigAssociations API Call")
+            query_log_details = route53resolver.list_resolver_query_log_config_associations()
+            for query_log_vpc_id in query_log_details['ResolverQueryLogConfigAssociations']:
+                QueryLogList.append(query_log_vpc_id['ResourceId'])
+            r53_working_list = (list(set(VPCList) - set(QueryLogList)))
+            logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + " WITHOUT Route 53 Query Logs:")
+            print(r53_working_list)
+            for no_query_logs in r53_working_list:
+                logging.info(no_query_logs + " does not have Route 53 Query logging on. It will be turned on within this function.")
+            logging.info("Activating logs for VPCs that do not have Route 53 Query logging turned on.")
+            logging.info("CreateResolverQueryLogConfig API Call")
+            create_query_log = route53resolver.create_resolver_query_log_config(
+                Name='Assisted_Log_Enabler_Query_Logs_' + aws_region,
+                DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/r53querylogs',
+                CreatorRequestId=timestamp_date_string,
+                Tags=[
+                    {
+                        'Key': 'Workflow',
+                        'Value': 'assisted-log-enabler'
+                    },
+                ]
+            )
+            r53_query_log_id = create_query_log['ResolverQueryLogConfig']['Id']
+            logging.info("Route 53 Query Logging Created. Resource ID:" + r53_query_log_id)
+            for vpc in r53_working_list:
+                logging.info("Associating " + vpc + " with the created Route 53 Query Logging.")
+                logging.info("AssocateResolverQueryLogConfig")
+                activate_r5_logs = route53resolver.associate_resolver_query_log_config(
+                    ResolverQueryLogConfigId=r53_query_log_id,
+                    ResourceId=vpc
+                )
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = create_bucket()
     flow_log_activator(region_list, account_number)
     check_cloudtrail(account_number)
     eks_logging(region_list)
+    route_53_query_logs(region_list, account_number)
     logger.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

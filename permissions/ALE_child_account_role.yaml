@@ -7,18 +7,14 @@
 
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Creates the baseline IAM Role and Policy, for use with Snitch across multiple accounts.
+  Creates the baseline IAM Role and Policy, for use with Assisted Log Enabler across multiple accounts.
 Parameters:
-  SnitchPolicyName:
-    Description: Please name the policy that will be used with the Snitch IAM Role.
+  AssistedLogEnablerPolicyName:
+    Description: Please name the policy that will be used with the Assisted Log Enabler IAM Role.
     Type: String
-    Default: Snitch_IAM_Policy
-  SnitchRoleName:
-    Description: Please name the Snitch IAM Role.
-    Type: String
-    Default: Snitch_IAM_Role
+    Default: AssistedLogEnabler_IAM_Policy
   SourceAccountNumber:
-    Description: Please provide the source account that Snitch will be running from.
+    Description: Please provide the source account that Assisted Log Enabler will be running from.
     Type: String
   OrgId:
     Description: Please provide the AWS Organization ID (e.g. o-abcdefg123)
@@ -27,10 +23,10 @@ Parameters:
 
 
 Resources:
-  SnitchPolicy:
+  AssistedLogEnablerPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: !Ref SnitchPolicyName
+      ManagedPolicyName: !Ref AssistedLogEnablerPolicyName
       Path: /
       PolicyDocument:
         Version: 2012-10-17
@@ -51,18 +47,21 @@ Resources:
               - cloudtrail:StartLogging
               - eks:UpdateClusterConfig
               - eks:ListClusters
+              - route53resolver:ListResolverQueryLogConfigAssociations
+              - route53resolver:CreateResolverQueryLogConfig
+              - route53resolver:AssociateResolverQueryLogConfig
             Resource: '*'
             Condition:
               StringEquals:
                 'aws:PrincipalOrgId': !Ref OrgId
 
-  SnitchRole:
+  AssistedLogEnablerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref SnitchRoleName
-      Description: Role to be assumed for running Snitch across a multi-account environment.
+      RoleName: Assisted_Log_Enabler_IAM_Role
+      Description: Role to be assumed for running Assisted Log Enabler across a multi-account environment.
       ManagedPolicyArns:
-        - Ref: SnitchPolicy
+        - Ref: AssistedLogEnablerPolicy
       MaxSessionDuration: 3600
       Path: /
       AssumeRolePolicyDocument:

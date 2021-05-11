@@ -6,7 +6,7 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "SnitchPolicy1",
+            "Sid": "AssistedLogEnablerPolicy1",
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogDelivery",
@@ -22,7 +22,11 @@
                 "s3:PutObject",
                 "cloudtrail:StartLogging",
                 "eks:UpdateClusterConfig",
-                "eks:ListClusters"
+                "eks:ListClusters",
+                "route53resolver:ListResolverQueryLogConfigAssociations",
+                "route53resolver:CreateResolverQueryLogConfig",
+                "route53resolver:AssociateResolverQueryLogConfig"
+
             ],
             "Resource": "*",
             "Condition": {

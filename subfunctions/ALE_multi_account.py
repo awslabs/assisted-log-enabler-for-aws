@@ -47,7 +47,7 @@ def org_account_grab():
 
 
 def get_account_number():
-    """Function to grab AWS Account number that Snitch runs from"""
+    """Function to grab AWS Account number that Assisted Log Enabler runs from."""
     sts = boto3.client('sts')
     account_number = sts.get_caller_identity()["Account"]
     return account_number
@@ -57,12 +57,18 @@ def create_bucket(organization_id, account_number):
     """Function to create the bucket for storing logs"""
     try:
         logging.info("Creating bucket in %s" % account_number)
-        logging_bucket_dict = s3.create_bucket(
-            Bucket="aws-log-collection-" + account_number + "-" + region
-#            CreateBucketConfiguration={
-#                'LocationConstraint': region
-#            }
-        )
+        logging.info("CreateBucket API Call")
+        if region == 'us-east-1':
+            logging_bucket_dict = s3.create_bucket(
+                Bucket="aws-log-collection-" + account_number + "-" + region
+            )
+        else:
+            logging_bucket_dict = s3.create_bucket(
+                Bucket="aws-log-collection-" + account_number + "-" + region,
+                CreateBucketConfiguration={
+                    'LocationConstraint': region
+                }
+            )
         logging.info("Bucket Created.")
         logging.info("Setting lifecycle policy.")
         lifecycle_policy = s3.put_bucket_lifecycle_configuration(
@@ -93,9 +99,12 @@ def create_bucket(organization_id, account_number):
         create_ct_path_vpc = s3.put_object(
             Bucket="aws-log-collection-" + account_number + "-" + region,
             Key='vpcflowlogs/')
+        create_ct_path_r53 = s3.put_object(
+            Bucket="aws-log-collection-" + account_number + "-" + region,
+            Key='r53querylogs/')
         bucket_policy = s3.put_bucket_policy(
             Bucket="aws-log-collection-" + account_number + "-" + region,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSLogDeliveryWrite","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
         )
     except Exception as exception_handle:
         logging.error(exception_handle)
@@ -107,18 +116,18 @@ def vpc_list(account_number, OrgAccountIdList):
     logging.info("Creating a list of VPCs without Flow Logs on.")
     for org_account in OrgAccountIdList:
         sts = boto3.client('sts')
-        RoleArn = 'arn:aws:iam::%s:role/Snitch_IAM_Role' % org_account
-        logging.info('Assuming Target Role %s for Snitch...' % RoleArn)
-        snitch_sts = sts.assume_role(
+        RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+        logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+        assisted_log_enabler_sts = sts.assume_role(
             RoleArn=RoleArn,
-            RoleSessionName='snitch-activation',
+            RoleSessionName='assisted-log-enabler-activation',
             DurationSeconds=3600,
         )
         ec2_ma = boto3.client(
         'ec2',
-        aws_access_key_id=snitch_sts['Credentials']['AccessKeyId'],
-        aws_secret_access_key=snitch_sts['Credentials']['SecretAccessKey'],
-        aws_session_token=snitch_sts['Credentials']['SessionToken'],
+        aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+        aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+        aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
         region_name=region
         )
         vpcs = ec2_ma.describe_vpcs()
