@@ -13,20 +13,23 @@ import datetime
 import argparse
 import csv
 from botocore.exceptions import ClientError
+from datetime import timezone
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 current_date = datetime.datetime.now()
 current_date_string = str(current_date)
+timestamp_date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+timestamp_date_string = str(timestamp_date)
 
 
-ec2 = boto3.client('ec2')
 sts = boto3.client('sts')
 s3 = boto3.client('s3')
 cloudtrail = boto3.client('cloudtrail')
 organizations = boto3.client('organizations')
 region = os.environ['AWS_REGION']
+
+
+region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
 
 def org_account_grab():
@@ -111,56 +114,189 @@ def create_bucket(organization_id, account_number):
     return account_number
 
 
-def vpc_list(account_number, OrgAccountIdList):
+def flow_log_activator(account_number, OrgAccountIdList, region_list):
     """Function to define the list of VPCs without logging turned on"""
     logging.info("Creating a list of VPCs without Flow Logs on.")
     for org_account in OrgAccountIdList:
-        sts = boto3.client('sts')
-        RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
-        logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
-        assisted_log_enabler_sts = sts.assume_role(
-            RoleArn=RoleArn,
-            RoleSessionName='assisted-log-enabler-activation',
-            DurationSeconds=3600,
-        )
-        ec2_ma = boto3.client(
-        'ec2',
-        aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
-        aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
-        aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
-        region_name=region
-        )
-        vpcs = ec2_ma.describe_vpcs()
-        vpcflowloglist = ec2_ma.describe_flow_logs()
-        VPCList: list = []
-        FlowLogList: list = []
-        for vpc_id in vpcs["Vpcs"]:
-            VPCList.append(vpc_id["VpcId"])
-        for resource_id in vpcflowloglist["FlowLogs"]:
-            logging.info("Making list of VPCs without logging, then making them into a working list")
-            FlowLogList.append(resource_id["ResourceId"])
-        flow_log_activator(VPCList, FlowLogList, account_number, OrgAccountIdList, ec2_ma)
-
-
-def flow_log_activator(VPCList, FlowLogList, account_number, OrgAccountIdList, ec2_ma):
-        """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
-        working_list = (list(set(VPCList) - set(FlowLogList)))
-        print("List of VPCs without Flow Logs:")
-        print(working_list)
-        for no_logs in working_list:
-            logging.info(no_logs + " does not have VPC Flow logging on. It will be turned on within this function.")
-            logging.info("Activating logs for VPCs that do not have them turned on.")
-            logging.info("If all VPCs have Flow Logs turned on, you will get an MissingParameter error. That is normal.")
-            time.sleep(2)
-            flow_log_on = ec2_ma.create_flow_logs(
-                ResourceIds=working_list,
-                ResourceType='VPC',
-                TrafficType='ALL',
-                LogDestinationType='s3',
-                LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs',
-                LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}'
+        for aws_region in region_list:
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
             )
-            logging.info("VPC Flow Logs are turned on.")
+            ec2_ma = boto3.client(
+            'ec2',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            logging.info("Creating a list of VPCs without Flow Logs on in region " + aws_region + ".")
+            try:
+                VPCList: list = []
+                FlowLogList: list = []
+                logging.info("DescribeVpcs API Call")
+                vpcs = ec2_ma.describe_vpcs()
+                for vpc_id in vpcs["Vpcs"]:
+                    VPCList.append(vpc_id["VpcId"])
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + ":")
+                print(VPCList)
+                vpcflowloglist = ec2_ma.describe_flow_logs()
+                logging.info("DescribeFlowLogs API Call")
+                for resource_id in vpcflowloglist["FlowLogs"]:
+                    FlowLogList.append(resource_id["ResourceId"])
+                working_list = (list(set(VPCList) - set(FlowLogList)))
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + " WITHOUT VPC Flow Logs:")
+                print(working_list)
+                for no_logs in working_list:
+                    logging.info(no_logs + " does not have VPC Flow logging on. It will be turned on within this function.")
+                logging.info("Activating logs for VPCs that do not have them turned on.")
+                logging.info("If all VPCs have Flow Logs turned on, you will get an MissingParameter error. That is normal.")
+                logging.info("CreateFlowLogs API Call")
+                flow_log_on =  ec2_ma.create_flow_logs(
+                    ResourceIds=working_list,
+                    ResourceType='VPC',
+                    TrafficType='ALL',
+                    LogDestinationType='s3',
+                    LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs',
+                    LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}'
+                )
+                logging.info("VPC Flow Logs are turned on for account " + org_account + ".")
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
+
+def eks_logging(region_list, OrgAccountIdList):
+    """Function to turn on logging for EKS Clusters"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Turning on audit and authenticator logging for EKS clusters in AWS account " + org_account + ", in region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            eks_ma = boto3.client(
+            'eks',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                logging.info("ListClusters API Call")
+                eks_clusters = eks_ma.list_clusters()
+                eks_cluster_list = eks_clusters ['clusters']
+                logging.info("EKS Clusters found in " + aws_region + ":")
+                print(eks_cluster_list)
+                for cluster in eks_cluster_list:
+                    logging.info("UpdateClusterConfig API Call")
+                    eks_activate = eks_ma.update_cluster_config(
+                        name=cluster,
+                        logging={
+                            'clusterLogging': [
+                                {
+                                    'types': [
+                                        'audit',
+                                    ],
+                                    'enabled': True
+                                },
+                                {
+                                    'types': [
+                                        'authenticator',
+                                    ],
+                                    'enabled': True
+                                },
+                            ]
+                        }
+                    )
+                    if eks_activate['update']['status'] == 'InProgress':
+                        logging.info(cluster + " EKS Cluster is currently updating. Status: InProgress")
+                    elif eks_activate['update']['status'] == 'Failed':
+                        logging.info(cluster + " EKS Cluster failed to turn on logs. Please check if you have permissions to update the logging configuration of EKS. Status: Failed")
+                    elif eks_activate['update']['status'] == 'Cancelled':
+                        logging.info(cluster + " EKS Cluster log update was cancelled. Status: Cancelled.")
+                    else:
+                        logging.info(cluster + " EKS Cluster has audit and authenticator logs turned on.")
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
+def route_53_query_logs(region_list, account_number, OrgAccountIdList):
+    """Function to turn on Route 53 Query Logs for VPCs"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Turning on Route 53 Query Logging on in AWS Account " + org_account + " VPCs, in region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            ec2_ma = boto3.client(
+            'ec2',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            route53resolver_ma = boto3.client(
+            'route53resolver',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                VPCList: list = []
+                QueryLogList: list = []
+                logging.info("DescribeVpcs API Call")
+                vpcs = ec2_ma.describe_vpcs()
+                for vpc_id in vpcs["Vpcs"]:
+                    VPCList.append(vpc_id["VpcId"])
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + ":")
+                print(VPCList)
+                logging.info("ListResolverQueryLogConfigAssociations API Call")
+                query_log_details = route53resolver_ma.list_resolver_query_log_config_associations()
+                for query_log_vpc_id in query_log_details['ResolverQueryLogConfigAssociations']:
+                    QueryLogList.append(query_log_vpc_id['ResourceId'])
+                r53_working_list = (list(set(VPCList) - set(QueryLogList)))
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + " WITHOUT Route 53 Query Logs:")
+                print(r53_working_list)
+                for no_query_logs in r53_working_list:
+                    logging.info(no_query_logs + " does not have Route 53 Query logging on. It will be turned on within this function.")
+                logging.info("Activating logs for VPCs that do not have Route 53 Query logging turned on.")
+                logging.info("CreateResolverQueryLogConfig API Call")
+                create_query_log = route53resolver_ma.create_resolver_query_log_config(
+                    Name='Assisted_Log_Enabler_Query_Logs_' + aws_region,
+                    DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/r53querylogs',
+                    CreatorRequestId=timestamp_date_string,
+                    Tags=[
+                        {
+                            'Key': 'Workflow',
+                            'Value': 'assisted-log-enabler'
+                        },
+                    ]
+                )
+                r53_query_log_id = create_query_log['ResolverQueryLogConfig']['Id']
+                logging.info("Route 53 Query Logging Created. Resource ID:" + r53_query_log_id)
+                for vpc in r53_working_list:
+                    logging.info("Associating " + vpc + " with the created Route 53 Query Logging.")
+                    logging.info("AssocateResolverQueryLogConfig")
+                    activate_r5_logs = route53resolver_ma.associate_resolver_query_log_config(
+                        ResolverQueryLogConfigId=r53_query_log_id,
+                        ResourceId=vpc
+                    )
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
 
 
 def lambda_handler(event, context):
@@ -168,8 +304,10 @@ def lambda_handler(event, context):
     account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
     create_bucket(organization_id, account_number)
-    vpc_list(account_number, OrgAccountIdList)
-    logger.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+    flow_log_activator(account_number, OrgAccountIdList, region_list)
+    eks_logging(region_list, OrgAccountIdList)
+    route_53_query_logs(region_list, account_number, OrgAccountIdList)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
 if __name__ == '__main__':

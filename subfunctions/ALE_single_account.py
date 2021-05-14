@@ -20,17 +20,6 @@ timestamp_date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 timestamp_date_string = str(timestamp_date)
 
 
-logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(format=logFormatter, level=logging.INFO)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
-output_handle.setLevel(logging.INFO)
-logger.addHandler(output_handle)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-output_handle.setFormatter(formatter)
-
-
 sts = boto3.client('sts')
 s3 = boto3.client('s3')
 cloudtrail = boto3.client('cloudtrail')
@@ -283,7 +272,7 @@ def lambda_handler(event, context):
     check_cloudtrail(account_number)
     eks_logging(region_list)
     route_53_query_logs(region_list, account_number)
-    logger.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
 if __name__ == '__main__':
