@@ -54,6 +54,13 @@ Resources:
             Condition:
               StringEquals:
                 'aws:PrincipalOrgId': !Ref OrgId
+          - Effect: Allow
+            Action:
+              - iam:CreateServiceLinkedRole
+            Resource: !Sub arn:aws:iam::${SourceAccountNumber}:role/aws-service-role/route53resolver.amazonaws.com/AWSServiceRoleForRoute53Resolver
+            Condition:
+              StringLike:
+                'iam:AWSServiceName': 'route53resolver.amazonaws.com'
 
   AssistedLogEnablerRole:
     Type: AWS::IAM::Role

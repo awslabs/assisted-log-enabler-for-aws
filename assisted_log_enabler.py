@@ -17,10 +17,21 @@ from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 current_date = datetime.datetime.now()
 current_date_string = str(current_date)
+timestamp_date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+timestamp_date_string = str(timestamp_date)
+
+
+logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=logFormatter, level=logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
+output_handle.setLevel(logging.INFO)
+logger.addHandler(output_handle)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+output_handle.setFormatter(formatter)
 
 
 def banner():
@@ -52,6 +63,12 @@ def banner():
 
 def assisted_log_enabler():
     """Function to run Assisted Log Enabler"""
+    output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
+    output_handle.setLevel(logging.INFO)
+    logger.addHandler(output_handle)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    output_handle.setFormatter(formatter)
+    
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
     parser.add_argument('--single_account',help=' Run Assisted Log Enabler against a single AWS account.', action='store_true', required=False)
     parser.add_argument('--multi_account',help=' Run Assisted Log Enabler against a multi account AWS environment. WARNING: You must have the associated CloudFormation template deployed as a StackSet before running this option.', action='store_true', required=False)
