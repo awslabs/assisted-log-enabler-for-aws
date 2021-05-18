@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
 // Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "AssistedLogEnablerPolicy1",
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogDelivery",
@@ -31,7 +31,19 @@
             "Resource": "*",
             "Condition": {
                 "StringEquals": {
-                  "aws:SourceAccount": "<enter_account_number_here>"
+                  "aws:SourceAccount": "<source_account_number_here>"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole"
+            ],
+            "Resource": "arn:aws:iam::<child_account_number_here>:role/aws-service-role/route53resolver.amazonaws.com/AWSServiceRoleForRoute53Resolver",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "route53resolver.amazonaws.com"
                 }
             }
         }
