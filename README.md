@@ -39,7 +39,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "route53resolver:ListResolverQueryLogConfigAssociations",
 "route53resolver:CreateResolverQueryLogConfig",
 "route53resolver:AssociateResolverQueryLogConfig",
-"iam:CreateServiceLinkRole" # Needed in Multi Account Mode for Route 53 Query Logs
+"iam:CreateServiceLinkRole" # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
 ```
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
 
