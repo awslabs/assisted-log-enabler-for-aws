@@ -35,6 +35,18 @@
                   "aws:SourceAccount": "<enter_account_number_here>"
                 }
             }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole"
+            ],
+            "Resource": "arn:aws:iam::<enter_account_number_here>:role/aws-service-role/route53resolver.amazonaws.com/AWSServiceRoleForRoute53Resolver",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "route53resolver.amazonaws.com"
+                }
+            }
         }
     ]
 }
