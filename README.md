@@ -2,16 +2,16 @@
 This script is for customers who do not have logging turned on for various services, and lack knowledge of best practices and/or how to turn them on.
 
 With this script, logging is turned on automatically for the various AWS Services for a customer:
-* VPC Flow Logs (Single Account and Multi-Account using Organizations)
-* CloudTrail (Single Account Only)
-* EKS Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
-* S3 Access Logs (future release)
-* NEW! Route 53 Query Logs (Single Account and Multi-Account using Organizations)
+* Amazon VPC Flow Logs (Single Account and Multi-Account using Organizations)
+* AWS CloudTrail (Single Account Only)
+* Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
+* Amazon Simple Storage Service (S3) Access Logs (future release)
+* NEW! Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
 
 ## Use Case
 There are customers of AWS who sometimes do not have logging turned on. When no logs are available, the ability to assist customers with analysis becomes limited, to the point that performing analysis may not be possible. Additionally, there are customers who use AWS that may not have the full technical expertise of how to set up logging for the various AWS services.
 
-Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an S3 bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. When this is performed, the customer can be assured that logging within their AWS environment is active, in order to investigate future (and possibly ongoing) security incidents.
+Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an Amazon Simple Storage Service (S3) bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. When this is performed, the customer can be assured that logging within their AWS environment is active, in order to investigate future (and possibly ongoing) security incidents.
 
 ## Diagram
 The following is a simple diagram on how Assisted Log Enabler for AWS works in a single account, in order to turn on logging for customers.
@@ -49,14 +49,14 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * A Lifecycle Policy is created for the bucket, with the following parameters:
    * Converts files to Intelligent-Tiering storage after 90 days
    * Deletes files after 365 days
-* Block Public Access is explicitly set to On for the S3 bucket created. (Single Account only as of this release)
-* VPCs are checked to see if flow logs are turned on or off.
-* For VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created.
+* Block Public Access is explicitly set to On for the S3 bucket created.
+* Amazon VPCs are checked to see if flow logs are turned on or off.
+* For Amazon VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created.
    * Amazon VPC Flow Logs version 2, 3, 4, and 5 fields are all enabled.
 * AWS CloudTrail service is checked to see there is at least one CloudTrail configured. (Single Account only as of this release)
 * If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
-* If EKS Clusters exist, audit & authenticator logs are turned on.
-* NEW! Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
+* If Amazon EKS Clusters exist, audit & authenticator logs are turned on.
+* NEW! Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
 
 
 ### Running the Code

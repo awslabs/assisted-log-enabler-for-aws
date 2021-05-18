@@ -109,6 +109,17 @@ def create_bucket(organization_id, account_number):
             Bucket="aws-log-collection-" + account_number + "-" + region,
             Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
         )
+        logging.info("Setting the S3 bucket Public Access to Blocked")
+        logging.info("PutPublicAccessBlock API Call")
+        bucket_private = s3.put_public_access_block(
+            Bucket="aws-log-collection-" + account_number + "-" + region,
+            PublicAccessBlockConfiguration={
+                'BlockPublicAcls': True,
+                'IgnorePublicAcls': True,
+                'BlockPublicPolicy': True,
+                'RestrictPublicBuckets': True
+            },
+        )
     except Exception as exception_handle:
         logging.error(exception_handle)
     return account_number
