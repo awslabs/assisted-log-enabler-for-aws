@@ -5,7 +5,6 @@ With this script, logging is turned on automatically for the various AWS Service
 * Amazon VPC Flow Logs (Single Account and Multi-Account using Organizations)
 * AWS CloudTrail (Single Account Only)
 * Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
-* Amazon Simple Storage Service (S3) Access Logs (future release)
 * NEW! Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
 
 ## Use Case
@@ -185,8 +184,8 @@ Sample output within the log file:
 2021-02-23 05:31:54,984 - INFO - Turning on audit and authenticator logging for EKS clusters in region af-south-1.
 ```
 
-### Current Restrictions
-
+## Feedback
+Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered. 
 
 ## Security
 
