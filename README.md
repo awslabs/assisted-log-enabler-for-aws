@@ -187,6 +187,16 @@ Sample output within the log file:
 ## Feedback
 Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered. 
 
+
+## Costs
+For answers to cost-related questions involved with this solution, refer to the following links:
+* AWS CloudTrail Pricing: [Link](https://aws.amazon.com/cloudtrail/pricing/)
+* Amazon S3 Pricing: [Link](https://aws.amazon.com/s3/pricing/)
+* Amazon VPC Flow Logs Pricing: [Link](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
+* Amazon Route 53 Pricing (look for the ): [Link](https://aws.amazon.com/route53/pricing/)
+* Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
