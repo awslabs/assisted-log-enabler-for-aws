@@ -8,9 +8,11 @@ With this script, logging is turned on automatically for the various AWS Service
 * NEW! Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
 
 ## Use Case
-There are customers of AWS who sometimes do not have logging turned on. When no logs are available, the ability to assist customers with analysis becomes limited, to the point that performing analysis may not be possible. Additionally, there are customers who use AWS that may not have the full technical expertise of how to set up logging for the various AWS services.
+Logging information is important for troubleshooting issues and analyzing performance, and when Amazon Web Services (AWS) customers do not have logging turned on, the ability to assist them becomes limited, to the point that performing analysis may be impossible. In some cases, customers may not have the technical expertise needed to set up logging properly for the various AWS services.
 
-Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an Amazon Simple Storage Service (S3) bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. When this is performed, the customer can be assured that logging within their AWS environment is active, in order to investigate future (and possibly ongoing) security incidents.
+Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an Amazon Simple Storage Service (S3) bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. 
+
+When this work is performed, the customer can be assured that logging within their AWS environment is active to facilitate the investigation of future (and possibly ongoing) security incidents.
 
 ## Diagram
 The following is a simple diagram on how Assisted Log Enabler for AWS works in a single account, in order to turn on logging for customers.
@@ -41,6 +43,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "iam:CreateServiceLinkRole" # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
 ```
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
+
 
 ### Workflow Details
 The following are the details of what happens within the Assisted Log Enabler for AWS workflow:
@@ -86,6 +89,7 @@ python3 assisted_log_enabler.py
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
          Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Twitter: @jdubm31
          Type -h for help.
 
 No valid option selected. Please run with -h to display valid options.
@@ -184,8 +188,11 @@ Sample output within the log file:
 2021-02-23 05:31:54,984 - INFO - Turning on audit and authenticator logging for EKS clusters in region af-south-1.
 ```
 
-## Feedback
-Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered. 
+
+## Cleaning Up
+Once the logs have been enabled, you can safely remove any of the downloaded files from AWS CloudShell.
+* Note: The log file containing the detailed output of actions will be in the root directory of the Assisted Log Enabler for AWS tool. If you want to retain this, please download this to a safe place, either locally or to an Amazon S3 bucket, for your records. For information on how to download files from AWS CloudShell sessions, refer to the following [link](https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-cloudshell.html#files-storage).
+For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS. 
 
 
 ## Costs
@@ -195,6 +202,10 @@ For answers to cost-related questions involved with this solution, refer to the 
 * Amazon VPC Flow Logs Pricing: [Link](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
 * Amazon Route 53 Pricing (look for the Route 53 Resolver Query Logs section): [Link](https://aws.amazon.com/route53/pricing/)
 * Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+
+
+## Feedback
+Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered. 
 
 
 ## Security

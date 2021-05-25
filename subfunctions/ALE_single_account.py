@@ -214,7 +214,7 @@ def eks_logging(region_list):
             logging.error(exception_handle)
 
 
-# 6. Turn on Route 53 Query Logging.
+# 5. Turn on Route 53 Query Logging.
 def route_53_query_logs(region_list, account_number):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for aws_region in region_list:
