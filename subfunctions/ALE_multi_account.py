@@ -32,6 +32,7 @@ region = os.environ['AWS_REGION']
 region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
 
+# 1. Obtain the AWS Accounts inside of AWS Organizations
 def org_account_grab():
     """Function to list account inside of AWS Organizations"""
     try:
@@ -49,6 +50,7 @@ def org_account_grab():
     return OrgAccountIdList, organization_id
 
 
+# 2. Obtain the current AWS Account Number
 def get_account_number():
     """Function to grab AWS Account number that Assisted Log Enabler runs from."""
     sts = boto3.client('sts')
@@ -56,6 +58,7 @@ def get_account_number():
     return account_number
 
 
+# 3. Create a Bucket and Lifecycle Policy
 def create_bucket(organization_id, account_number):
     """Function to create the bucket for storing logs"""
     try:
@@ -125,6 +128,7 @@ def create_bucket(organization_id, account_number):
     return account_number
 
 
+# 4. Find VPCs and turn flow logs on if not on already.
 def flow_log_activator(account_number, OrgAccountIdList, region_list):
     """Function to define the list of VPCs without logging turned on"""
     logging.info("Creating a list of VPCs without Flow Logs on.")
@@ -180,6 +184,7 @@ def flow_log_activator(account_number, OrgAccountIdList, region_list):
                 logging.error(exception_handle)
 
 
+# 5. Turn on EKS audit and authenticator logs.
 def eks_logging(region_list, OrgAccountIdList):
     """Function to turn on logging for EKS Clusters"""
     for org_account in OrgAccountIdList:
@@ -238,6 +243,8 @@ def eks_logging(region_list, OrgAccountIdList):
             except Exception as exception_handle:
                 logging.error(exception_handle)
 
+
+# 6. Turn on Route 53 Query Logging.
 def route_53_query_logs(region_list, account_number, OrgAccountIdList):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for org_account in OrgAccountIdList:
@@ -307,7 +314,6 @@ def route_53_query_logs(region_list, account_number, OrgAccountIdList):
                     )
             except Exception as exception_handle:
                 logging.error(exception_handle)
-
 
 
 def lambda_handler(event, context):
