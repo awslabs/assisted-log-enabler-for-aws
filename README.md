@@ -45,7 +45,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
 
 
-### Workflow Details
+## Workflow Details
 The following are the details of what happens within the Assisted Log Enabler for AWS workflow:
 * An Amazon S3 bucket is created within the customer's account.
 * A Lifecycle Policy is created for the bucket, with the following parameters:
@@ -61,7 +61,7 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * NEW! Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
 
 
-### Running the Code
+## Running the Code
 The code in its current form can be ran inside the following:
 * AWS CloudShell (preferred)
 * AWS Lambda
@@ -110,7 +110,7 @@ optional arguments:
                     option.
 ```
 
-#### Step-by-Step Instructions (for running in AWS CloudShell, single account mode)
+### Step-by-Step Instructions (for running in AWS CloudShell, single account mode)
 1. Log into the AWS Console of the account you want to run the Assisted Log Enabler for AWS.
    * Ensure that the principal being used to log into the AWS Console has the permissions [above](https://github.com/awslabs/assisted-log-enabler-for-aws#permissions).
 2. Click on the icon for AWS Cloudshell next to the search bar.
@@ -129,7 +129,7 @@ cd assisted-log-enabler-for-aws-main
 python3 assisted_log_enabler.py --single_account
 ```
 
-#### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
+### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
 1. Log into the AWS Console of the account you want to run the Assisted Log Enabler for AWS.
    * Ensure that the AWS Account you're in is the account you want to store the logs. Additionally, ensure that the AWS account you're in has access to the AWS Organizations information within your AWS environment.
 2. Within the AWS Console, go to AWS CloudFormation. 
