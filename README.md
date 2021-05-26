@@ -19,7 +19,7 @@ The following is a simple diagram on how Assisted Log Enabler for AWS works in a
 
 ![Alt text](diagrams/assisted_log_enabler.png)
 
-## Prerequesites
+## Prerequisites
 ### Permissions
 The following permissions are needed within AWS IAM for Assisted Log Enabler for AWS to run:
 ```
