@@ -192,6 +192,7 @@ Sample output within the log file:
 ## Cleaning Up
 Once the logs have been enabled, you can safely remove any of the downloaded files from AWS CloudShell.
 * Note: The log file containing the detailed output of actions will be in the root directory of the Assisted Log Enabler for AWS tool. If you want to retain this, please download this to a safe place, either locally or to an Amazon S3 bucket, for your records. For information on how to download files from AWS CloudShell sessions, refer to the following [link](https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-cloudshell.html#files-storage).
+
 For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS. 
 
 
