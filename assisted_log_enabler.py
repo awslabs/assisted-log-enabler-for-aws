@@ -11,15 +11,16 @@ import time
 import datetime
 import argparse
 from botocore.exceptions import ClientError
+from datetime import timezone
 
 
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
 
 
-current_date = datetime.datetime.now()
+current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
-timestamp_date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+timestamp_date = datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d-%H%M%S")
 timestamp_date_string = str(timestamp_date)
 
 
