@@ -34,7 +34,7 @@ region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-no
 
 # 1. Obtain the AWS Accounts inside of AWS Organizations
 def org_account_grab():
-    """Function to list account inside of AWS Organizations"""
+    """Function to list accounts inside of AWS Organizations"""
     try:
         OrgAccountIdList: list = []
         org_account_list = organizations.list_accounts()

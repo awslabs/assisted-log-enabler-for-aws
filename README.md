@@ -10,7 +10,7 @@ With this script, logging is turned on automatically for the various AWS Service
 ## Use Case
 Logging information is important for troubleshooting issues and analyzing performance, and when Amazon Web Services (AWS) customers do not have logging turned on, the ability to assist them becomes limited, to the point that performing analysis may be impossible. In some cases, customers may not have the technical expertise needed to set up logging properly for the various AWS services.
 
-Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an Amazon Simple Storage Service (S3) bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off. 
+Assisted Log Enabler for AWS is designed to ease the customer burden of learning how to turn on logs in the middle of a security incident. Assisted Log Enabler for AWS performs the work of creating an Amazon Simple Storage Service (S3) bucket, checking the services to see if logging is turned on, and activating logging when it's found to be off.
 
 When this work is performed, the customer can be assured that logging within their AWS environment is active to facilitate the investigation of future (and possibly ongoing) security incidents.
 
@@ -69,20 +69,20 @@ The code in its current form can be ran inside the following:
 ```
 python3 assisted_log_enabler.py
 
- █████  ███████ ███████ ██ ███████ ████████ ███████ ██████  
+ █████  ███████ ███████ ██ ███████ ████████ ███████ ██████ 
 ██   ██ ██      ██      ██ ██         ██    ██      ██   ██ 
 ███████ ███████ ███████ ██ ███████    ██    █████   ██   ██ 
 ██   ██      ██      ██ ██      ██    ██    ██      ██   ██ 
 ██   ██ ███████ ███████ ██ ███████    ██    ███████ ██████  
-                                                            
-                                                            
+                                                           
+
                 ██       ██████   ██████                   
                 ██      ██    ██ ██                        
                 ██      ██    ██ ██   ███                  
                 ██      ██    ██ ██    ██                  
                 ███████  ██████   ██████                    
                                                             
-                                                            
+
 ███████ ███    ██  █████  ██████  ██      ███████ ██████    
 ██      ████   ██ ██   ██ ██   ██ ██      ██      ██   ██   
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
@@ -132,7 +132,7 @@ python3 assisted_log_enabler.py --single_account
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
 1. Log into the AWS Console of the account you want to run the Assisted Log Enabler for AWS.
    * Ensure that the AWS Account you're in is the account you want to store the logs. Additionally, ensure that the AWS account you're in has access to the AWS Organizations information within your AWS environment.
-2. Within the AWS Console, go to AWS CloudFormation. 
+2. Within the AWS Console, go to AWS CloudFormation.
 3. Within AWS CloudFormation, go to StackSets.
 4. Within the StackSets screen, select Create StackSet.
 5. In Step 1, under Specify Template, selecte Upload a template file, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
@@ -169,7 +169,7 @@ python3 assisted_log_enabler.py --multi_account
 
 
 ### Logging
-A log file containing the detailed output of actions will be placed in the root directory of the Assited Log Enabler for AWS tool. The format of the file will be ALE_<timestamp>.log
+A log file containing the detailed output of actions will be placed in the root directory of the Assisted Log Enabler for AWS tool. The format of the file will be ALE_timestamp_here.log
 
 Sample output within the log file:
 ```
@@ -193,7 +193,7 @@ Sample output within the log file:
 Once the logs have been enabled, you can safely remove any of the downloaded files from AWS CloudShell.
 * Note: The log file containing the detailed output of actions will be in the root directory of the Assisted Log Enabler for AWS tool. If you want to retain this, please download this to a safe place, either locally or to an Amazon S3 bucket, for your records. For information on how to download files from AWS CloudShell sessions, refer to the following [link](https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-cloudshell.html#files-storage).
 
-For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS. 
+For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS.
 
 
 ## Costs
@@ -206,7 +206,7 @@ For answers to cost-related questions involved with this solution, refer to the 
 
 
 ## Feedback
-Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered. 
+Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered.
 
 
 ## Security
