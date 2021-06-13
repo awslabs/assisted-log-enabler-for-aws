@@ -1,11 +1,11 @@
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-This script is for customers who do not have logging turned on for various services, and lack knowledge of best practices and/or how to turn them on.
+Assisted Log Enabler for AWS is for customers who do not have logging turned on for various services, and lack knowledge of best practices and/or how to turn them on.
 
-With this script, logging is turned on automatically for the various AWS Services for a customer:
+With Assisted Log Enabler for AWS, logging is turned on automatically for the various AWS Services for a customer:
 * Amazon VPC Flow Logs (Single Account and Multi-Account using Organizations)
 * AWS CloudTrail (Single Account Only)
 * Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
-* NEW! Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
+* Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
 
 ## Use Case
 Logging information is important for troubleshooting issues and analyzing performance, and when Amazon Web Services (AWS) customers do not have logging turned on, the ability to assist them becomes limited, to the point that performing analysis may be impossible. In some cases, customers may not have the technical expertise needed to set up logging properly for the various AWS services.
@@ -58,7 +58,7 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * AWS CloudTrail service is checked to see there is at least one CloudTrail configured. (Single Account only as of this release)
 * If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
 * If Amazon EKS Clusters exist, audit & authenticator logs are turned on.
-* NEW! Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
+* Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
 
 
 ## Running the Code
