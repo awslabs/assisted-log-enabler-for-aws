@@ -265,6 +265,33 @@ def route_53_query_logs(region_list, account_number):
             logging.error(exception_handle)
 
 
+def run_eks():
+    """Function that runs the defined EKS logging code"""
+    eks_logging(region_list)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
+def run_cloudtrail():
+    """Function that runs the defined CloudTrail logging code"""
+    account_number = create_bucket()
+    check_cloudtrail(account_number)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
+def run_vpc_flow_logs():
+    """Function that runs the defined VPC Flow Log logging code"""
+    account_number = create_bucket()
+    flow_log_activator(region_list, account_number)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+    
+
+def run_r53_query_logs():
+    """Function that runs the defined R53 Query Logging code"""
+    account_number = create_bucket()
+    route_53_query_logs(region_list, account_number)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = create_bucket()

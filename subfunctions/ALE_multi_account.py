@@ -316,6 +316,31 @@ def route_53_query_logs(region_list, account_number, OrgAccountIdList):
                 logging.error(exception_handle)
 
 
+def run_eks():
+    """Function that runs the defined EKS logging code"""
+    OrgAccountIdList, organization_id = org_account_grab()
+    eks_logging(region_list, OrgAccountIdList)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
+def run_vpc_flow_logs():
+    """Function that runs the defined VPC Flow Log logging code"""
+    account_number = get_account_number()
+    OrgAccountIdList, organization_id = org_account_grab()
+    create_bucket(organization_id, account_number)
+    flow_log_activator(account_number, OrgAccountIdList, region_list)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+    
+
+def run_r53_query_logs():
+    """Function that runs the defined R53 Query Logging code"""
+    account_number = get_account_number()
+    OrgAccountIdList, organization_id = org_account_grab()
+    create_bucket(organization_id, account_number)
+    route_53_query_logs(region_list, account_number, OrgAccountIdList)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = get_account_number()

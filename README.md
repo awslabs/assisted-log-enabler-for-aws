@@ -7,6 +7,8 @@ With Assisted Log Enabler for AWS, logging is turned on automatically for the va
 * Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
 * Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
 
+Link to related AWS Blog Post: [Introducing Assisted Log Enabler for AWS](https://aws.amazon.com/blogs/opensource/introducing-assisted-log-enabler-for-aws/)
+
 ## Use Case
 Logging information is important for troubleshooting issues and analyzing performance, and when Amazon Web Services (AWS) customers do not have logging turned on, the ability to assist them becomes limited, to the point that performing analysis may be impossible. In some cases, customers may not have the technical expertise needed to set up logging properly for the various AWS services.
 
@@ -97,17 +99,28 @@ No valid option selected. Please run with -h to display valid options.
 * Options
 ```
 python3 assisted_log_enabler.py -h
-usage: assisted_log_enabler.py [-h] [--single_account] [--multi_account]
+usage: assisted_log_enabler.py [-h] [--mode MODE] [--all] [--eks] [--vpcflow]
+                               [--r53querylogs] [--cloudtrail]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
 
 optional arguments:
-  -h, --help        show this help message and exit
-  --single_account  Run Assisted Log Enabler against a single AWS account.
-  --multi_account   Run Assisted Log Enabler against a multi account AWS environment.
-                    WARNING: You must have the associated CloudFormation
-                    template deployed as a StackSet before running this
-                    option.
+  -h, --help      show this help message and exit
+  --mode MODE     Choose the mode that you want to run Assisted Log Enabler
+                  in. Available modes: single_account, multi_account. WARNING:
+                  For multi_account, You must have the associated
+                  CloudFormation template deployed as a StackSet. See the
+                  README file for more details.
+
+Service Options:
+  Use these flags to choose which services you want to turn logging on for.
+
+  --all           Turns on all of the log types within the Assisted Log
+                  Enabler for AWS.
+  --eks           Turns on Amazon EKS audit & authenticator logs.
+  --vpcflow       Turns on Amazon VPC Flow Logs.
+  --r53querylogs  Turns on Amazon Route 53 Resolver Query Logs.
+  --cloudtrail    Turns on AWS CloudTrail.
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, single account mode)
@@ -124,9 +137,18 @@ git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 unzip assisted-log-enabler-for-aws-main.zip
 cd assisted-log-enabler-for-aws-main
 ```
-5. Run the following command to run the Assisted Log Enabler in single account mode:
+5. Run the following command to run the Assisted Log Enabler in single account mode, for the AWS service or services you want to check for:
 ```
-python3 assisted_log_enabler.py --single_account
+# For all services:
+python3 assisted_log_enabler.py --mode single_account --all
+# For Amazon EKS:
+python3 assisted_log_enabler.py --mode single_account --eks
+# For Amazon VPC Flow Logs:
+python3 assisted_log_enabler.py --mode single_account --vpcflow
+# For Amazon Route 53 Resolver Query Logs:
+python3 assisted_log_enabler.py --mode single_account --r53querylogs
+# For AWS CloudTrail:
+python3 assisted_log_enabler.py --mode single_account --cloudtrail
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
@@ -162,9 +184,17 @@ git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 unzip assisted-log-enabler-for-aws-main.zip
 cd assisted-log-enabler-for-aws-main
 ```
-16. Run the following command to run the Assisted Log Enabler in multi account mode:
+16. Run the following command to run the Assisted Log Enabler in multi account mode, for the AWS service or services you want to check for:
 ```
-python3 assisted_log_enabler.py --multi_account
+# For all services:
+python3 assisted_log_enabler.py --mode multi_account --all
+# For Amazon EKS:
+python3 assisted_log_enabler.py --mode multi_account --eks
+# For Amazon VPC Flow Logs:
+python3 assisted_log_enabler.py --mode multi_account --vpcflow
+# For Amazon Route 53 Resolver Query Logs:
+python3 assisted_log_enabler.py --mode multi_account --r53querylogs
+
 ```
 
 

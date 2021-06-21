@@ -58,6 +58,7 @@ def banner():
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
          Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Twitter: @jdubm31
          Type -h for help.
     ''')
 
@@ -69,19 +70,46 @@ def assisted_log_enabler():
     logger.addHandler(output_handle)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     output_handle.setFormatter(formatter)
-    
+
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
-    parser.add_argument('--single_account',help=' Run Assisted Log Enabler against a single AWS account.', action='store_true', required=False)
-    parser.add_argument('--multi_account',help=' Run Assisted Log Enabler against a multi account AWS environment. WARNING: You must have the associated CloudFormation template deployed as a StackSet before running this option.', action='store_true', required=False)
+    parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
+    
+    function_parser_group = parser.add_argument_group('Service Options', 'Use these flags to choose which services you want to turn logging on for.')
+    function_parser_group.add_argument('--all', action='store_true', help=' Turns on all of the log types within the Assisted Log Enabler for AWS.')
+    function_parser_group.add_argument('--eks', action='store_true', help=' Turns on Amazon EKS audit & authenticator logs.')
+    function_parser_group.add_argument('--vpcflow', action='store_true', help=' Turns on Amazon VPC Flow Logs.')
+    function_parser_group.add_argument('--r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
+    function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail.')
+
     args = parser.parse_args()
     banner()
 
     event = 'event'
     context = 'context'
-    if args.single_account:
-        ALE_single_account.lambda_handler(event, context)
-    elif args.multi_account:
-        ALE_multi_account.lambda_handler(event, context)
+    if args.mode == 'single_account':
+        if args.eks:
+            ALE_single_account.run_eks()
+        elif args.vpcflow:
+            ALE_single_account.run_vpc_flow_logs()
+        elif args.r53querylogs:
+            ALE_single_account.run_r53_query_logs()
+        elif args.cloudtrail:
+            ALE_single_account.run_cloudtrail()
+        elif args.all:
+            ALE_single_account.lambda_handler(event, context)
+        else:
+            logging.info("No valid option selected. Please run with -h to display valid options.")
+    elif args.mode == 'multi_account':
+        if args.eks:
+            ALE_multi_account.run_eks()
+        elif args.vpcflow:
+            ALE_multi_account.run_vpc_flow_logs()
+        elif args.r53querylogs:
+            ALE_multi_account.run_r53_query_logs()
+        elif args.all:
+            ALE_multi_account.lambda_handler(event, context)
+        else:
+            logging.info("No valid option selected. Please run with -h to display valid options.")
     else:
         print("No valid option selected. Please run with -h to display valid options.")
 
