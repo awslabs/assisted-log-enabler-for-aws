@@ -99,3 +99,19 @@
 
 ### Added
 * CHANGELOG file
+
+## [1.3.0] - 2021-07-08
+
+### Added
+* Code for cleaning up AWS resources created by Assisted Log Enabler for AWS.
+    * Amazon Route 53 Resolver Query Logging in single account mode is only currently supported.
+* Options for running cleanup mode within the main function.
+* IAM Permissions example for cleanup operations.
+* Information within the Step-by-Step instructions for multi-account to reflect details about AWS CloudFormation StackSets Delegated Administrator.
+
+### Changed
+* README documentation.
+    * Updated Cleanup section to reflect new cleanup capabilities.
+    * Updated IAM Permissions examples within the README.
+* AWS CloudFormation template for deploying IAM Permissions to run cleanup code.
+* Header in files to reflect "Assisted Log Enabler for AWS", instead of "Assisted Log Enabler (ALE)".
