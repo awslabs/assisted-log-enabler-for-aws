@@ -1,6 +1,6 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
-# Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+# Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
 # Joshua "DozerCat" McKiddy - Team DragonCat - AWS
 # This sample template is for creating an IAM Role within child accounts, for the purpose of running Assisted Log Enabler across a multi-account environment.
 
@@ -61,6 +61,17 @@ Resources:
             Condition:
               StringLike:
                 'iam:AWSServiceName': 'route53resolver.amazonaws.com'
+          - Effect: Allow
+            Action:
+              - route53resolver:ListResolverQueryLogConfigs
+              - route53resolver:ListTagsForResource
+              - route53resolver:ListResolverQueryLogConfigAssociations
+              - route53resolver:DisassociateResolverQueryLogConfig
+              - route53resolver:DeleteResolverQueryLogConfig
+            Resource: '*'
+            Condition:
+              StringEquals:
+                'aws:PrincipalOrgId': !Ref OrgId
 
   AssistedLogEnablerRole:
     Type: AWS::IAM::Role

@@ -1,6 +1,6 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
-# Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+# Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
 # Joshua "DozerCat" McKiddy - Team DragonCat - AWS
 
 import logging
@@ -16,6 +16,7 @@ from datetime import timezone
 
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
+from subfunctions import ALE_cleanup_single
 
 
 current_date = datetime.datetime.now(tz=timezone.utc)
@@ -81,6 +82,9 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail.')
 
+    cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
+    cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
+
     args = parser.parse_args()
     banner()
 
@@ -110,6 +114,9 @@ def assisted_log_enabler():
             ALE_multi_account.lambda_handler(event, context)
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
+    elif args.mode == 'cleanup':
+        if args.single_r53querylogs:
+            ALE_cleanup_single.run_r53_cleanup()
     else:
         print("No valid option selected. Please run with -h to display valid options.")
 

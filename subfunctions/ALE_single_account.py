@@ -1,6 +1,6 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
-# Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+# Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
 # Joshua "DozerCat" McKiddy - Team DragonCat - AWS
 
 
@@ -256,8 +256,8 @@ def route_53_query_logs(region_list, account_number):
             logging.info("Route 53 Query Logging Created. Resource ID:" + r53_query_log_id)
             for vpc in r53_working_list:
                 logging.info("Associating " + vpc + " with the created Route 53 Query Logging.")
-                logging.info("AssocateResolverQueryLogConfig")
-                activate_r5_logs = route53resolver.associate_resolver_query_log_config(
+                logging.info("AssociateResolverQueryLogConfig")
+                activate_r53_logs = route53resolver.associate_resolver_query_log_config(
                     ResolverQueryLogConfigId=r53_query_log_id,
                     ResourceId=vpc
                 )

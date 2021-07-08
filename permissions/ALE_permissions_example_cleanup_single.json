@@ -1,0 +1,27 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+// Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
+// Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AssistedLogEnablerCleanup1",
+            "Effect": "Allow",
+            "Action": [
+                "route53resolver:ListResolverQueryLogConfigs",
+                "route53resolver:ListTagsForResource",
+                "route53resolver:ListResolverQueryLogConfigAssociations",
+                "route53resolver:DisassociateResolverQueryLogConfig",
+                "route53resolver:DeleteResolverQueryLogConfig"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "<enter_account_number_here>"
+                }
+            }
+        }
+    ]
+}

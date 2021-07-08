@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-// Assisted Log Enabler (ALE) - Find resources that are not logging, and turn them on.
+// Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
 // Joshua "DozerCat" McKiddy - Team DragonCat - AWS
 
 {
@@ -27,7 +27,6 @@
                 "route53resolver:ListResolverQueryLogConfigAssociations",
                 "route53resolver:CreateResolverQueryLogConfig",
                 "route53resolver:AssociateResolverQueryLogConfig"
-
             ],
             "Resource": "*",
             "Condition": {
