@@ -23,8 +23,9 @@ The following is a simple diagram on how Assisted Log Enabler for AWS works in a
 
 ## Prerequisites
 ### Permissions
-The following permissions are needed within AWS IAM for Assisted Log Enabler for AWS to run:
+The following permissions are needed within AWS IAM for Assisted Log Enabler for AWS to run. Please see each section for a breakdown per AWS Service and functionality:
 ```
+# All permissions used within Assisted Log Enabler for AWS:
 "ec2:DescribeVpcs",
 "ec2:DescribeFlowLogs",
 "ec2:CreateFlowLogs",
@@ -42,7 +43,55 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "route53resolver:ListResolverQueryLogConfigAssociations",
 "route53resolver:CreateResolverQueryLogConfig",
 "route53resolver:AssociateResolverQueryLogConfig",
+"iam:CreateServiceLinkRole", # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
+"route53resolver:ListResolverQueryLogConfigs",
+"route53resolver:ListTagsForResource",
+"route53resolver:DisassociateResolverQueryLogConfig",
+"route53resolver:DeleteResolverQueryLogConfig"
+
+# For adding AWS CloudTrail logs:
+"s3:GetBucketPolicy",
+"s3:PutBucketPolicy",
+"s3:PutLifecycleConfiguration"
+"s3:PutObject",
+"s3:CreateBucket",
+"cloudtrail:StartLogging",
+"cloudtrail:CreateTrail",
+"cloudtrail:DescribeTrails"
+
+# For adding Amazon VPC Flow Logs:
+"s3:GetBucketPolicy",
+"s3:PutBucketPolicy",
+"s3:PutLifecycleConfiguration"
+"s3:PutObject",
+"s3:CreateBucket",
+"ec2:DescribeVpcs",
+"ec2:DescribeFlowLogs",
+"ec2:CreateFlowLogs"
+
+# For adding Amazon EKS logs:
+"eks:UpdateClusterConfig",
+"eks:ListClusters",
+"logs:CreateLogDelivery"
+
+# For adding Amazon Route 53 Resolver Query Logs:
+"s3:GetBucketPolicy",
+"s3:PutBucketPolicy",
+"s3:PutLifecycleConfiguration"
+"s3:PutObject",
+"s3:CreateBucket",
+"ec2:DescribeVpcs",
+"route53resolver:ListResolverQueryLogConfigAssociations",
+"route53resolver:CreateResolverQueryLogConfig",
+"route53resolver:AssociateResolverQueryLogConfig",
 "iam:CreateServiceLinkRole" # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
+
+# NEW! For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
+"route53resolver:ListResolverQueryLogConfigs",
+"route53resolver:ListTagsForResource",
+"route53resolver:ListResolverQueryLogConfigAssociations",
+"route53resolver:DisassociateResolverQueryLogConfig",
+"route53resolver:DeleteResolverQueryLogConfig"
 ```
 Additionally, if running from within a AWS Lambda function, the function will need the AWSLambdaBasicExecutionRole in order to run successfully. Please refer to the following link for more details: https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
 
@@ -154,6 +203,7 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
 1. Log into the AWS Console of the account you want to run the Assisted Log Enabler for AWS.
    * Ensure that the AWS Account you're in is the account you want to store the logs. Additionally, ensure that the AWS account you're in has access to the AWS Organizations information within your AWS environment.
+   * You may have to register your AWS account as a delegated administrator within AWS CloudFormation, in order to run this code in an AWS account of your choosing. Please see the following link for more details: [Register a delegated administrator](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
 2. Within the AWS Console, go to AWS CloudFormation.
 3. Within AWS CloudFormation, go to StackSets.
 4. Within the StackSets screen, select Create StackSet.
@@ -224,6 +274,12 @@ Once the logs have been enabled, you can safely remove any of the downloaded fil
 * Note: The log file containing the detailed output of actions will be in the root directory of the Assisted Log Enabler for AWS tool. If you want to retain this, please download this to a safe place, either locally or to an Amazon S3 bucket, for your records. For information on how to download files from AWS CloudShell sessions, refer to the following [link](https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-cloudshell.html#files-storage).
 
 For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS.
+
+NEW! A cleanup mode is available within the Assisted Log Enabler for AWS (currently only for single account, Amazon Route 53 Resover Query Logs). Collected logs within Amazon S3 will NOT be removed, however, logging resources can be removed by following the below commands:
+```
+# To remove Amazon Route 53 Resolver Query Logs (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
+```
 
 
 ## Costs
