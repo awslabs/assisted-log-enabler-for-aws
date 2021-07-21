@@ -205,7 +205,7 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
    * Ensure that the AWS Account you're in is the account you want to store the logs. Additionally, ensure that the AWS account you're in has access to the AWS Organizations information within your AWS environment.
    * You may have to register your AWS account as a delegated administrator within AWS CloudFormation, in order to run this code in an AWS account of your choosing. Please see the following link for more details: [Register a delegated administrator](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
 2. Within the AWS Console, go to AWS CloudFormation.
-3. Within AWS CloudFormation, go to StackSets.
+3. To deploy the IAM Permissions within all child accounts: Within AWS CloudFormation, go to StackSets.
 4. Within the StackSets screen, select Create StackSet.
 5. In Step 1, under Specify Template, select Upload a template file, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
 6. In Step 2, under StackSet Name, add a descriptive name.
@@ -223,7 +223,7 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
 11. In Step 4, under Deployment options, leave the default settings.
 12. In Step 5, review the settings you've set in the previous steps. If all is correct, check the box that states "I acknowledge that AWS CloudFormation might create IAM resources with custom names."
    * Once this is submitted, you'll need to wait until the StackSet is fully deployed. If there are errors, please examine the error and ensure that all the information from the above steps are correct.
-13. Within AWS CloudFormation, go to Stacks.
+13. To deploy the IAM Permissions within the AWS Account where Assisted Log Enabler for AWS is being ran: Within AWS CloudFormation, go to Stacks.
 14. Within the Stacks screen, go to the Create Stack dropdown, and select With new resources.
 15. In Step 1, select Upload a template file, select Choose File, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
 16. In Step 2, under Stack Name, add a descriptive name.
