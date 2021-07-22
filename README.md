@@ -293,6 +293,9 @@ NEW! A cleanup mode is available within the Assisted Log Enabler for AWS (curren
 python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 ```
 
+## Additional Tools
+For analysing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link](https://github.com/awslabs/aws-security-analytics-bootstrap)
+
 
 ## Costs
 For answers to cost-related questions involved with this solution, refer to the following links:

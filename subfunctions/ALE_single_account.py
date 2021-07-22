@@ -10,6 +10,8 @@ import json
 import boto3
 import time
 import datetime
+import string
+import random
 from botocore.exceptions import ClientError
 from datetime import timezone
 
@@ -29,8 +31,16 @@ region = os.environ['AWS_REGION']
 region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
 
+# 0. Define random string for S3 Bucket Name
+def random_string_generator():
+    lower_letters = string.ascii_lowercase
+    numbers = string.digits
+    unique_end = (''.join(random.choice(lower_letters + numbers) for char in range(6)))
+    return unique_end
+
+
 # 1. Create a Bucket and Lifecycle Policy
-def create_bucket():
+def create_bucket(unique_end):
     """Function to create the bucket for storing logs"""
     try:
         account_number = sts.get_caller_identity()["Account"]
@@ -38,11 +48,11 @@ def create_bucket():
         logging.info("CreateBucket API Call")
         if region == 'us-east-1':
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region
+                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end
             )
         else:
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region,
+                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
                 CreateBucketConfiguration={
                     'LocationConstraint': region
                 }
@@ -51,7 +61,7 @@ def create_bucket():
         logging.info("Setting lifecycle policy.")
         logging.info("PutBucketLifecycleConfiguration API Call")
         lifecycle_policy = s3.put_bucket_lifecycle_configuration(
-            Bucket="aws-log-collection-" + account_number + "-" + region,
+            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
             LifecycleConfiguration={
                 'Rules': [
                     {
@@ -74,17 +84,17 @@ def create_bucket():
         logging.info("Lifecycle Policy successfully set.")
         logging.info("PutObject API Call")
         create_ct_path = s3.put_object(
-            Bucket="aws-log-collection-" + account_number + "-" + region,
+            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
             Key='cloudtrail/AWSLogs/' + account_number + '/')
         logging.info("PutBucketPolicy API Call")
         bucket_policy = s3.put_bucket_policy(
-            Bucket="aws-log-collection-" + account_number + "-" + region,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
         )
         logging.info("Setting the S3 bucket Public Access to Blocked")
         logging.info("PutPublicAccessBlock API Call")
         bucket_private = s3.put_public_access_block(
-            Bucket="aws-log-collection-" + account_number + "-" + region,
+            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
             PublicAccessBlockConfiguration={
                 'BlockPublicAcls': True,
                 'IgnorePublicAcls': True,
@@ -98,7 +108,7 @@ def create_bucket():
 
 
 # 2. Find VPCs and turn flow logs on if not on already.
-def flow_log_activator(region_list, account_number):
+def flow_log_activator(region_list, account_number, unique_end):
     """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
     for aws_region in region_list:
         ec2 = boto3.client('ec2', region_name=aws_region)
@@ -129,7 +139,7 @@ def flow_log_activator(region_list, account_number):
                 ResourceType='VPC',
                 TrafficType='ALL',
                 LogDestinationType='s3',
-                LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/vpcflowlogs',
+                LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/vpcflowlogs',
                 LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}'
             )
             logging.info("VPC Flow Logs are turned on.")
@@ -138,7 +148,7 @@ def flow_log_activator(region_list, account_number):
 
 
 # 3. Check to see if a CloudTrail trail is configured, and turn it on if it is not.
-def check_cloudtrail(account_number):
+def check_cloudtrail(account_number, unique_end):
     """Function to check if CloudTrail is enabled"""
     logging.info("Checking to see if CloudTrail is on, and will activate if needed.")
     try:
@@ -150,7 +160,7 @@ def check_cloudtrail(account_number):
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
                 Name='aws-cloudtrail-em-' + account_number,
-                S3BucketName="aws-log-collection-" + account_number + "-" + region,
+                S3BucketName="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
                 S3KeyPrefix='cloudtrail',
                 IsMultiRegionTrail=True,
                 EnableLogFileValidation=True
@@ -215,7 +225,7 @@ def eks_logging(region_list):
 
 
 # 5. Turn on Route 53 Query Logging.
-def route_53_query_logs(region_list, account_number):
+def route_53_query_logs(region_list, account_number, unique_end):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for aws_region in region_list:
         logging.info("Turning on Route 53 Query Logging on for VPCs in region " + aws_region + ".")
@@ -243,7 +253,7 @@ def route_53_query_logs(region_list, account_number):
             logging.info("CreateResolverQueryLogConfig API Call")
             create_query_log = route53resolver.create_resolver_query_log_config(
                 Name='Assisted_Log_Enabler_Query_Logs_' + aws_region,
-                DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '/r53querylogs',
+                DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/r53querylogs',
                 CreatorRequestId=timestamp_date_string,
                 Tags=[
                     {
@@ -273,32 +283,36 @@ def run_eks():
 
 def run_cloudtrail():
     """Function that runs the defined CloudTrail logging code"""
-    account_number = create_bucket()
-    check_cloudtrail(account_number)
+    unique_end = random_string_generator()
+    account_number = create_bucket(unique_end)
+    check_cloudtrail(account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
 def run_vpc_flow_logs():
     """Function that runs the defined VPC Flow Log logging code"""
-    account_number = create_bucket()
-    flow_log_activator(region_list, account_number)
+    unique_end = random_string_generator()
+    account_number = create_bucket(unique_end)
+    flow_log_activator(region_list, account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
     
 
 def run_r53_query_logs():
     """Function that runs the defined R53 Query Logging code"""
-    account_number = create_bucket()
-    route_53_query_logs(region_list, account_number)
+    unique_end = random_string_generator()
+    account_number = create_bucket(unique_end)
+    route_53_query_logs(region_list, account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
-    account_number = create_bucket()
-    flow_log_activator(region_list, account_number)
-    check_cloudtrail(account_number)
+    unique_end = random_string_generator()
+    account_number = create_bucket(unique_end)
+    flow_log_activator(region_list, account_number, unique_end)
+    check_cloudtrail(account_number, unique_end)
     eks_logging(region_list)
-    route_53_query_logs(region_list, account_number)
+    route_53_query_logs(region_list, account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
