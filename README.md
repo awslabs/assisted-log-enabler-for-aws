@@ -205,9 +205,9 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
    * Ensure that the AWS Account you're in is the account you want to store the logs. Additionally, ensure that the AWS account you're in has access to the AWS Organizations information within your AWS environment.
    * You may have to register your AWS account as a delegated administrator within AWS CloudFormation, in order to run this code in an AWS account of your choosing. Please see the following link for more details: [Register a delegated administrator](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
 2. Within the AWS Console, go to AWS CloudFormation.
-3. Within AWS CloudFormation, go to StackSets.
+3. To deploy the IAM Permissions within all child accounts: Within AWS CloudFormation, go to StackSets.
 4. Within the StackSets screen, select Create StackSet.
-5. In Step 1, under Specify Template, selecte Upload a template file, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
+5. In Step 1, under Specify Template, select Upload a template file, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
 6. In Step 2, under StackSet Name, add a descriptive name.
 7. In Step 2, under Parameters, add the parameters required:
    * AssistedLogEnablerPolicyName: You can leave this default, but you can also change it if desired.
@@ -218,23 +218,35 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
 9. In Step 4, under Deployment targets, select the option that fits for your AWS Organization.
    * If you Deploy to Organization, it will deploy to all AWS accounts except the root AWS account. If you want to include that one, you can either deploy the template to the root AWS account directly, or use the other option (details below).
    * If you Deploy to organizational units (OUs), you can deploy directly to OUs that you define, including the root OU.
-10. In Step 4, under Specify Regions, select US East (N.Virginia)
+10. In Step 4, under Specify Regions, select US East (N.Virginia).
    * There's no need to select multiple regions here. This template only deploys AWS IAM resources, which are Global.
 11. In Step 4, under Deployment options, leave the default settings.
 12. In Step 5, review the settings you've set in the previous steps. If all is correct, check the box that states "I acknowledge that AWS CloudFormation might create IAM resources with custom names."
    * Once this is submitted, you'll need to wait until the StackSet is fully deployed. If there are errors, please examine the error and ensure that all the information from the above steps are correct.
-13. Once the StackSet is successfully deployed, click on the icon for AWS Cloudshell next to the search bar.
+13. To deploy the IAM Permissions within the AWS Account where Assisted Log Enabler for AWS is being ran: Within AWS CloudFormation, go to Stacks.
+14. Within the Stacks screen, go to the Create Stack dropdown, and select With new resources.
+15. In Step 1, select Upload a template file, select Choose File, and use the AWS CloudFormation template provided in the permissions folder. [Link to the file](https://github.com/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml)
+16. In Step 2, under Stack Name, add a descriptive name.
+17. In Step 2, under Parameters, add the parameters required:
+   * AssistedLogEnablerPolicyName: You can leave this default, but you can also change it if desired.
+   * OrgId: Provide the AWS Organization ID
+   * SourceAccountNumber: Provide the source AWS account number that the Assisted Log Enabler for AWS will be running.
+18. In Step 3, add any tags that you desire, as well as any permissions options that you want to select.
+   * The service-managed permissions work just fine for Assisted Log Enabler for AWS, but you can use self-service permissions if desired.
+19. In Step 5, review the settings you've set in the previous steps. If all is correct, check the box that states "I acknowledge that AWS CloudFormation might create IAM resources with custom names."
+   * Once this is submitted, you'll need to wait until the StackSet is fully deployed. If there are errors, please examine the error and ensure that all the information from the above steps are correct.
+20. Once both the StackSet and Stack are successfully deployed, click on the icon for AWS Cloudshell next to the search bar.
    * Ensure that you're in a region where AWS CloudShell is currently available.
-14. Once the session begins, download the Assisted Log Enabler within the AWS CloudShell session.
+21. Once the session begins, download the Assisted Log Enabler within the AWS CloudShell session.
 ```
 git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 ```
-15. Unzip the file, and change the directory to the unzipped folder:
+22. Unzip the file, and change the directory to the unzipped folder:
 ```
 unzip assisted-log-enabler-for-aws-main.zip
 cd assisted-log-enabler-for-aws-main
 ```
-16. Run the following command to run the Assisted Log Enabler in multi account mode, for the AWS service or services you want to check for:
+23. Run the following command to run the Assisted Log Enabler in multi account mode, for the AWS service or services you want to check for:
 ```
 # For all services:
 python3 assisted_log_enabler.py --mode multi_account --all
@@ -281,6 +293,9 @@ NEW! A cleanup mode is available within the Assisted Log Enabler for AWS (curren
 python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 ```
 
+## Additional Tools
+For analysing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link](https://github.com/awslabs/aws-security-analytics-bootstrap)
+
 
 ## Costs
 For answers to cost-related questions involved with this solution, refer to the following links:
@@ -292,7 +307,7 @@ For answers to cost-related questions involved with this solution, refer to the 
 
 
 ## Feedback
-Please use the Issues section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered.
+Please use the [Issues](https://github.com/awslabs/assisted-log-enabler-for-aws/issues) section to submit any feedback, such as features or recommendations, as well as any bugs that are encountered.
 
 
 ## Security

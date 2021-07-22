@@ -115,3 +115,13 @@
     * Updated IAM Permissions examples within the README.
 * AWS CloudFormation template for deploying IAM Permissions to run cleanup code.
 * Header in files to reflect "Assisted Log Enabler for AWS", instead of "Assisted Log Enabler (ALE)".
+
+## [1.3.1] - 2021-07-22
+
+### Added
+* Randomization to the end of the Amazon S3 bucket name in both single and multi account modes.
+* Instructions for deploying the AWS CloudFormation Stack individually, within the AWS Organizations root account for multi-account deployment.
+* Link for the AWS Security Analytics Bootstrap within the README.
+
+### Changed
+* Feedback section within README to contain link to Issues section. 
