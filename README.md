@@ -2,10 +2,10 @@
 Assisted Log Enabler for AWS is for customers who do not have logging turned on for various services, and lack knowledge of best practices and/or how to turn them on.
 
 With Assisted Log Enabler for AWS, logging is turned on automatically for the various AWS Services for a customer:
-* Amazon VPC Flow Logs (Single Account and Multi-Account using Organizations)
+* Amazon VPC Flow Logs (Single Account and Multi-Account using AWS Organizations)
 * AWS CloudTrail (Single Account Only)
-* Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using Organizations)
-* Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using Organizations)
+* Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using AWS Organizations)
+* Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using AWS Organizations)
 
 Link to related AWS Open Source Blog Post: [Introducing Assisted Log Enabler for AWS](https://aws.amazon.com/blogs/opensource/introducing-assisted-log-enabler-for-aws/)
 
@@ -177,7 +177,7 @@ Service Options:
    * Ensure that the principal being used to log into the AWS Console has the permissions [above](https://github.com/awslabs/assisted-log-enabler-for-aws#permissions).
 2. Click on the icon for AWS Cloudshell next to the search bar.
    * Ensure that you're in a region where AWS CloudShell is currently available.
-3. Once the session begins, download the Assisted Log Enabler within the AWS CloudShell session.
+3. Once the session begins, download the Assisted Log Enabler for AWS within the AWS CloudShell session.
 ```
 git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 ```
@@ -236,7 +236,7 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
    * Once this is submitted, you'll need to wait until the StackSet is fully deployed. If there are errors, please examine the error and ensure that all the information from the above steps are correct.
 20. Once both the StackSet and Stack are successfully deployed, click on the icon for AWS Cloudshell next to the search bar.
    * Ensure that you're in a region where AWS CloudShell is currently available.
-21. Once the session begins, download the Assisted Log Enabler within the AWS CloudShell session.
+21. Once the session begins, download the Assisted Log Enabler for AWS within the AWS CloudShell session.
 ```
 git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 ```

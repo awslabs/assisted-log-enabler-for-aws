@@ -131,3 +131,4 @@
 ### Changed
 * README Documentation
     * Removed unzip steps from single and multi-account instructions.
+    * Minor updates to various service names.
