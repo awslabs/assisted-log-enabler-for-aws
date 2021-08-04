@@ -181,10 +181,9 @@ Service Options:
 ```
 git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 ```
-4. Unzip the file, and change the directory to the unzipped folder:
+4. Change the directory to the folder cloned from the link in Step 3:
 ```
-unzip assisted-log-enabler-for-aws-main.zip
-cd assisted-log-enabler-for-aws-main
+cd assisted-log-enabler-for-aws
 ```
 5. Run the following command to run the Assisted Log Enabler in single account mode, for the AWS service or services you want to check for:
 ```
@@ -241,10 +240,9 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
 ```
 git clone https://github.com/awslabs/assisted-log-enabler-for-aws.git
 ```
-22. Unzip the file, and change the directory to the unzipped folder:
+22. Change the directory to the folder cloned from the link in Step 21:
 ```
-unzip assisted-log-enabler-for-aws-main.zip
-cd assisted-log-enabler-for-aws-main
+cd assisted-log-enabler-for-aws
 ```
 23. Run the following command to run the Assisted Log Enabler in multi account mode, for the AWS service or services you want to check for:
 ```
@@ -294,7 +292,7 @@ python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 ```
 
 ## Additional Tools
-For analysing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link](https://github.com/awslabs/aws-security-analytics-bootstrap)
+For analyzing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link](https://github.com/awslabs/aws-security-analytics-bootstrap)
 
 
 ## Costs
