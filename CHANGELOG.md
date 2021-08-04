@@ -124,4 +124,10 @@
 * Link for the AWS Security Analytics Bootstrap within the README.
 
 ### Changed
-* Feedback section within README to contain link to Issues section. 
+* Feedback section within README to contain link to Issues section.
+
+## [1.3.2] - 2021-08-03
+
+### Changed
+* README Documentation
+    * Removed unzip steps from single and multi-account instructions.
