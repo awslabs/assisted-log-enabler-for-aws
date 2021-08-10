@@ -292,7 +292,9 @@ python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 ```
 
 ## Additional Tools
-For analyzing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link](https://github.com/awslabs/aws-security-analytics-bootstrap)
+For analyzing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link to GitHub repository.](https://github.com/awslabs/aws-security-analytics-bootstrap)
+
+For an point-and-quick solution to analyze Amazon VPC Flow Logs, check out [this AWS blog post](https://aws.amazon.com/blogs/networking-and-content-delivery/analyze-vpc-flow-logs-with-point-and-click-amazon-athena-integration/) for instructions on how to deploy an Amazon Athena analysis environment that's compatible with your Amazon VPC Flow Logs, and provides several sample queries that can allow you to perform an investigation quickly without worrying about the format of the Amazon VPC Flow Logs.
 
 
 ## Costs

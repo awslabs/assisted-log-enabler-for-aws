@@ -132,3 +132,9 @@
 * README Documentation
     * Removed unzip steps from single and multi-account instructions.
     * Minor updates to various service names.
+
+## [1.3.3] - 2021-08-10
+
+### Added
+* README Documentation
+    * Added details for the point-and-clock Amazon Athena integration for VPC Flow Logs.
