@@ -278,6 +278,16 @@ Sample output within the log file:
 2021-02-23 05:31:54,984 - INFO - Turning on audit and authenticator logging for EKS clusters in region af-south-1.
 ```
 
+## NEW! Dry Run Mode
+Dry Run modes for single and multi-account are both available. These modes allow you to check for resources in your environment that do not have logging turned on, but does not activate the logging for said resources.
+
+To run Assisted Log Enabler for AWS in Dry Run mode, you can use the commands below:
+```
+# Single Account Dry Run
+python3 assisted_log_enabler.py --mode dryrun --single_account
+# Multi-Account Dry Run
+python3 assisted_log_enabler.py --mode dryrun --single_account
+```
 
 ## Cleaning Up
 Once the logs have been enabled, you can safely remove any of the downloaded files from AWS CloudShell.
