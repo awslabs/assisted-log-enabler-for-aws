@@ -138,3 +138,9 @@
 ### Added
 * README Documentation
     * Added details for the point-and-clock Amazon Athena integration for VPC Flow Logs.
+
+## [1.4.0] - 2021-08-13
+
+### Added
+* Dry Run mode for both single and multi-account modes.
+    * Added README Documentation for Dry Run modes.
