@@ -17,6 +17,8 @@ from datetime import timezone
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
 from subfunctions import ALE_cleanup_single
+from subfunctions import ALE_dryrun_single
+from subfunctions import ALE_dryrun_multi
 
 
 current_date = datetime.datetime.now(tz=timezone.utc)
@@ -85,6 +87,10 @@ def assisted_log_enabler():
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
     cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
 
+    dryrun_parser_group = parser.add_argument_group('Dry Run Options', 'Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.')
+    dryrun_parser_group.add_argument('--single_account', action='store_true', help=' Runs Assisted Log Enabler for AWS in Dry Run mode for a single AWS account.')
+    dryrun_parser_group.add_argument('--multi_account', action='store_true', help=' Runs Assisted Log Enabler for AWS in Dry Run mode for a multi-account AWS environment, using AWS Organizations.')
+
     args = parser.parse_args()
     banner()
 
@@ -117,6 +123,11 @@ def assisted_log_enabler():
     elif args.mode == 'cleanup':
         if args.single_r53querylogs:
             ALE_cleanup_single.run_r53_cleanup()
+    elif args.mode == 'dryrun':
+        if args.single_account:
+            ALE_dryrun_single.lambda_handler(event, context)
+        elif args.multi_account:
+            ALE_dryrun_multi.lambda_handler(event, context)
     else:
         print("No valid option selected. Please run with -h to display valid options.")
 
