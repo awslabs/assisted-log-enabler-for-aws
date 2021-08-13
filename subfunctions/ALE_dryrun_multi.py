@@ -50,6 +50,7 @@ def org_account_grab():
         exit()
     return OrgAccountIdList, organization_id
 
+
 # 2. Obtain the current AWS Account Number.
 def get_account_number():
     """Function to grab AWS Account number that Assisted Log Enabler runs from."""
@@ -87,14 +88,14 @@ def dryrun_flow_log_activator(account_number, OrgAccountIdList, region_list):
                 vpcs = ec2_ma.describe_vpcs()
                 for vpc_id in vpcs["Vpcs"]:
                     VPCList.append(vpc_id["VpcId"])
-                logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + ":")
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + ":")
                 print(VPCList)
                 logging.info("DescribeFlowLogs API Call")
                 vpcflowloglist = ec2_ma.describe_flow_logs()
                 for resource_id in vpcflowloglist["FlowLogs"]:
                     FlowLogList.append(resource_id["ResourceId"])
                 working_list = (list(set(VPCList) - set(FlowLogList)))
-                logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + " WITHOUT VPC Flow Logs:")
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + " WITHOUT VPC Flow Logs:")
                 print(working_list)
                 for no_logs in working_list:
                     logging.info(no_logs + " does not have VPC Flow logging on. This will not be turned on within the Dry Run option.")
@@ -107,7 +108,7 @@ def dryrun_eks_logging(region_list, OrgAccountIdList):
     """Function to turn on logging for EKS Clusters"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
-            logging.info("Turning on audit and authenticator logging for EKS clusters in AWS account " + org_account + ", in region " + aws_region + ".")
+            logging.info("Showing Amazon EKS clusters in AWS account " + org_account + ", in region " + aws_region + ".")
             sts = boto3.client('sts')
             RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
             logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
@@ -140,7 +141,7 @@ def dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
-            logging.info("Turning on Route 53 Query Logging on in AWS Account " + org_account + " VPCs, in region " + aws_region + ".")
+            logging.info("Checking Route 53 Query Logging on in AWS Account " + org_account + " VPCs, in region " + aws_region + ".")
             sts = boto3.client('sts')
             RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
             logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
@@ -170,14 +171,14 @@ def dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList):
                 vpcs = ec2_ma.describe_vpcs()
                 for vpc_id in vpcs["Vpcs"]:
                     VPCList.append(vpc_id["VpcId"])
-                logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + ":")
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + ":")
                 print(VPCList)
                 logging.info("ListResolverQueryLogConfigAssociations API Call")
                 query_log_details = route53resolver_ma.list_resolver_query_log_config_associations()
                 for query_log_vpc_id in query_log_details['ResolverQueryLogConfigAssociations']:
                     QueryLogList.append(query_log_vpc_id['ResourceId'])
                 r53_working_list = (list(set(VPCList) - set(QueryLogList)))
-                logging.info("List of VPCs found within account " + account_number + ", region " + aws_region + " WITHOUT Route 53 Query Logs:")
+                logging.info("List of VPCs found within account " + org_account + ", region " + aws_region + " WITHOUT Route 53 Query Logs:")
                 print(r53_working_list)
                 for no_query_logs in r53_working_list:
                     logging.info(no_query_logs + " does not have Route 53 Query logging on. Running Assisted Log Enabler for AWS will turn this on.")
@@ -189,7 +190,7 @@ def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
-    dryrun_flow_log_activator(region_list, OrgAccountIdList, account_number)
+    dryrun_flow_log_activator(account_number, OrgAccountIdList, region_list)
     dryrun_eks_logging(region_list, OrgAccountIdList)
     dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
