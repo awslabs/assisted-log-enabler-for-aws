@@ -295,11 +295,20 @@ Once the logs have been enabled, you can safely remove any of the downloaded fil
 
 For any AWS IAM Roles that are created, either manually or using AWS CloudFormation StackSets, those can be safely deleted upon enablement of logs through the Assisted Log Enabler for AWS.
 
-NEW! A cleanup mode is available within the Assisted Log Enabler for AWS (currently only for single account, Amazon Route 53 Resover Query Logs). Collected logs within Amazon S3 will NOT be removed, however, logging resources can be removed by following the below commands:
+A cleanup mode is available within the Assisted Log Enabler for AWS (currently only for single account). Collected logs within Amazon S3 will NOT be removed, however, logging resources can be removed by following the below commands:
 ```
-# To remove Amazon Route 53 Resolver Query Logs (single account):
+# To remove Amazon Route 53 Resolver Query Log resources created by Assisted Log Enabler for AWS (single account):
 python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
+# To remove Amazon VPC Flow Log resources created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_vpcflow
+# To remove AWS CloudTrail trails created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_cloudtrail
 ```
+
+## Shared Responsibility Model
+All resources created fall into the customer side of the Shared Responsibility Model.
+
+For AWS customers, please refer to the following link for more information about the Shared Responsibility Model: [Link](https://aws.amazon.com/compliance/shared-responsibility-model/)
 
 ## Additional Tools
 For analyzing logs created by Assisted Log Enabler for AWS, consider taking a look at the AWS Security Analytics Bootstrap, a tool that provides an Amazon Athena analysis environment that's quick to deploy, ready to use, and easy to maintain. [Link to GitHub repository.](https://github.com/awslabs/aws-security-analytics-bootstrap)

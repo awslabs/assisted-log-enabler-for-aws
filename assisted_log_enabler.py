@@ -85,7 +85,10 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail.')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
-    cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
+    cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Removes Amazon Route 53 Resolver Query Log resources created by Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_cloudtrail', action='store_true', help=' Removes AWS CloudTrail trails created by Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_vpcflow', action='store_true', help=' Removes Amazon VPC Flow Log resources created by Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_all', action='store_true', help=' Turns off all of the log types within the Assisted Log Enabler for AWS.')
 
     dryrun_parser_group = parser.add_argument_group('Dry Run Options', 'Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.')
     dryrun_parser_group.add_argument('--single_account', action='store_true', help=' Runs Assisted Log Enabler for AWS in Dry Run mode for a single AWS account.')
@@ -123,6 +126,12 @@ def assisted_log_enabler():
     elif args.mode == 'cleanup':
         if args.single_r53querylogs:
             ALE_cleanup_single.run_r53_cleanup()
+        elif args.single_cloudtrail:
+            ALE_cleanup_single.run_cloudtrail_cleanup()
+        elif args.single_vpcflow:
+            ALE_cleanup_single.run_vpcflow_cleanup()
+        elif args.single_all:
+            ALE_cleanup_single.lambda_handler(event, context)
     elif args.mode == 'dryrun':
         if args.single_account:
             ALE_dryrun_single.lambda_handler(event, context)

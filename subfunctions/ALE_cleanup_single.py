@@ -20,17 +20,7 @@ timestamp_date = datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d-%H%M%
 timestamp_date_string = str(timestamp_date)
 
 
-logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(format=logFormatter, level=logging.INFO)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
-output_handle.setLevel(logging.INFO)
-logger.addHandler(output_handle)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-output_handle.setFormatter(formatter)
-
-
+cloudtrail = boto3.client('cloudtrail') 
 region = os.environ['AWS_REGION']
 
 
@@ -40,6 +30,8 @@ region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-no
 # 1. Remove the Route 53 Resolver Query Logging Resources created by Assisted Log Enabler
 def r53_cleanup():
     """Function to clean up Route 53 Query Logging Resources"""
+    logging.info("Note: This script can take a while to finish, depending about how many Route 53 Query Log resources exist (about 60 seconds per Query Log resource) that were created by Assisted Log Enabler for AWS")
+    time.sleep(1)
     for aws_region in region_list:
         logging.info("---- LINE BREAK BETWEEN REGIONS ----")
         logging.info("Cleaning up Route 53 Query Logging Resources in region " + aws_region + ".")
@@ -110,6 +102,93 @@ def r53_cleanup():
                     time.sleep(2)
         except Exception as exception_handle:
             logging.error(exception_handle)
+
+
+# 2. Remove the CloudTrail Logging Resources created by Assisted Log Enabler.
+def cloudtrail_cleanup():
+    """Function to clean up CloudTrail Logs"""
+    logging.info("Cleaning up CloudTrail Logs.")
+    try:
+        logging.info("Cleaning up CloudTrail Logs created by Assisted Log Enabler for AWS.")
+        trail_list: list = []
+        removal_list: list = []
+        logging.info("DescribeTrails API Call")
+        cloudtrail_trails = cloudtrail.describe_trails()
+        for trail in cloudtrail_trails['trailList']:
+            trail_list.append(trail['TrailARN'])
+        logging.info("Listing CloudTrail trails created by Assisted Log Enabler for AWS.")
+        print("Full trail list")
+        print(trail_list)
+        for removal_trail in trail_list:
+            logging.info("Checking tags for trails created by Assisted Log Enabler for AWS.")
+            logging.info("ListTags API Call")
+            trail_tags = cloudtrail.list_tags(
+                ResourceIdList=[removal_trail]
+            )
+            for tag_lists in trail_tags['ResourceTagList']:
+                for key_info in tag_lists['TagsList']:
+                    print(key_info)
+                    if key_info['Key'] == 'workflow' and key_info['Value'] == 'assisted-log-enabler':
+                        removal_list.append(removal_trail)
+        print("Trails to be removed")
+        print(removal_list)
+        for delete_trail in removal_list:
+            logging.info("Deleting trails created by Assisted Log Enabler for AWS.")
+            logging.info("DeleteTrail API Call")
+            cloudtrail.delete_trail(
+                Name=delete_trail
+            )
+            logging.info(delete_trail + " has been deleted.")
+            time.sleep(1)
+    except Exception as exception_handle:
+        logging.error(exception_handle)
+
+
+# 3. Remove the VPC Flow Log Resources created by Assisted Log Enabler for AWS.
+def vpcflow_cleanup():
+    """Function to clean up VPC Flow Logs"""
+    logging.info("Cleaning up VPC Flow Logs created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Cleaning up VPC Flow Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
+            removal_list: list = []
+            ec2 = boto3.client('ec2', region_name=aws_region)
+            logging.info("DescribeFlowLogs API Call")
+            vpc_flow_logs = ec2.describe_flow_logs(
+                Filter=[
+                    {
+                        'Name': 'tag:workflow',
+                        'Values': [
+                            'assisted-log-enabler'
+                        ]
+                    },
+                ]
+            )
+            for flow_log_id in vpc_flow_logs['FlowLogs']:
+                print(flow_log_id['FlowLogId'])
+                removal_list.append(flow_log_id['FlowLogId'])
+            print(removal_list)
+            logging.info("DeleteFlowLogs API Call")
+            delete_logs = ec2.delete_flow_logs(
+                FlowLogIds=removal_list
+            )
+            logging.info("Deleted Flow Logs that were created by Assisted Log Enabler for AWS.")
+            time.sleep(1)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+
+def run_vpcflow_cleanup():
+    """Function to run the vpcflow_cleanup function"""
+    vpcflow_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
+
+def run_cloudtrail_cleanup():
+    """Function to run the cloudtrail_cleanup function"""
+    cloudtrail_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 
 def run_r53_cleanup():
