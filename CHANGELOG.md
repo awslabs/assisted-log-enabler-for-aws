@@ -144,3 +144,12 @@
 ### Added
 * Dry Run mode for both single and multi-account modes.
     * Added README Documentation for Dry Run modes.
+
+## [1.4.1] - 2021-08-23
+
+### Added
+* Tagging for VPC Flow Log Resources in single account mode.
+* Cleanup options for VPC Flow Logs and CloudTrails created by Assisted Log Enabler for AWS.
+* README Documentation
+    * Added details in the Cleanup section to reflect VPC Flow Logs and CloudTrail commands.
+    * Added section about the Shared Responsibility Model.
