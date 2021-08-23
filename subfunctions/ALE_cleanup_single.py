@@ -30,6 +30,8 @@ region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-no
 # 1. Remove the Route 53 Resolver Query Logging Resources created by Assisted Log Enabler
 def r53_cleanup():
     """Function to clean up Route 53 Query Logging Resources"""
+    logging.info("Note: This script can take a while to finish, depending about how many Route 53 Query Log resources exist (about 60 seconds per Query Log resource) that were created by Assisted Log Enabler for AWS")
+    time.sleep(1)
     for aws_region in region_list:
         logging.info("---- LINE BREAK BETWEEN REGIONS ----")
         logging.info("Cleaning up Route 53 Query Logging Resources in region " + aws_region + ".")
@@ -142,10 +144,10 @@ def cloudtrail_cleanup():
         logging.error(exception_handle)
 
 
-# 3. Remove the VPC Flow Log Resources created by Assisted Log Enabler.
+# 3. Remove the VPC Flow Log Resources created by Assisted Log Enabler for AWS.
 def vpcflow_cleanup():
     """Function to clean up VPC Flow Logs"""
-    logging.info("Cleaning up VPC Flow Logs.")
+    logging.info("Cleaning up VPC Flow Logs created by Assisted Log Enabler for AWS.")
     for aws_region in region_list:
         try:
             logging.info("---- LINE BREAK BETWEEN REGIONS ----")
