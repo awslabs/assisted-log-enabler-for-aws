@@ -153,3 +153,8 @@
 * README Documentation
     * Added details in the Cleanup section to reflect VPC Flow Logs and CloudTrail commands.
     * Added section about the Shared Responsibility Model.
+
+## [1.4.1b] - 2021-08-24
+
+### Added
+* Condition statements for if no options were selected during Dry Run and Cleanup modes.

@@ -132,11 +132,15 @@ def assisted_log_enabler():
             ALE_cleanup_single.run_vpcflow_cleanup()
         elif args.single_all:
             ALE_cleanup_single.lambda_handler(event, context)
+        else:
+            logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'dryrun':
         if args.single_account:
             ALE_dryrun_single.lambda_handler(event, context)
         elif args.multi_account:
             ALE_dryrun_multi.lambda_handler(event, context)
+        else:
+            logging.info("No valid option selected. Please run with -h to display valid options.")
     else:
         print("No valid option selected. Please run with -h to display valid options.")
 
