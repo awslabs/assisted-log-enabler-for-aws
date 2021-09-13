@@ -170,7 +170,7 @@ def check_cloudtrail(account_number, unique_end):
         if cloudtrail_status["trailList"][0]["Name"] == "":
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
-                Name='aws-cloudtrail-em-' + account_number,
+                Name='assisted-log-enabler-ct-' + account_number,
                 S3BucketName="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
                 S3KeyPrefix='cloudtrail',
                 IsMultiRegionTrail=True,
