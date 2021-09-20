@@ -177,6 +177,17 @@ def check_cloudtrail(account_number, unique_end):
                 EnableLogFileValidation=True
                 )
             cloudtrail_name = cloudtrail_activate["Name"]
+            cloudtrail_arn = cloudtrail_activate["TrailARN"]
+            logging.info("AddTags API Call")
+            cloudtrail_tags = cloudtrail.add_tags(
+                ResourceId=cloudtrail_arn,
+                TagsList=[
+                    {
+                        'Key': 'workflow',
+                        'Value': 'assisted-log-enabler'
+                    },
+                ]
+            )
             logging.info("StartLogging API Call")
             cloudtrail_on = cloudtrail.start_logging(
                 Name=cloudtrail_name
