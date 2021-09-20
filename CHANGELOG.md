@@ -159,7 +159,10 @@
 ### Added
 * Condition statements for if no options were selected during Dry Run and Cleanup modes.
 
-## [1.4.2] - 2021-09-13
+## [1.4.2] - 2021-09-20
+
+### Added
+* CloudTrail tags to show that the trail is created by Assisted Log Enabler for AWS.
 
 ### Changed
 * CloudTrail name to be more descriptive that it's created by Assisted Log Enabler for AWS.
