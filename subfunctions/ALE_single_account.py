@@ -170,13 +170,24 @@ def check_cloudtrail(account_number, unique_end):
         if cloudtrail_status["trailList"][0]["Name"] == "":
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
-                Name='aws-cloudtrail-em-' + account_number,
+                Name='assisted-log-enabler-ct-' + account_number,
                 S3BucketName="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
                 S3KeyPrefix='cloudtrail',
                 IsMultiRegionTrail=True,
                 EnableLogFileValidation=True
                 )
             cloudtrail_name = cloudtrail_activate["Name"]
+            cloudtrail_arn = cloudtrail_activate["TrailARN"]
+            logging.info("AddTags API Call")
+            cloudtrail_tags = cloudtrail.add_tags(
+                ResourceId=cloudtrail_arn,
+                TagsList=[
+                    {
+                        'Key': 'workflow',
+                        'Value': 'assisted-log-enabler'
+                    },
+                ]
+            )
             logging.info("StartLogging API Call")
             cloudtrail_on = cloudtrail.start_logging(
                 Name=cloudtrail_name
