@@ -1,7 +1,7 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-# Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+# Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
 
 import logging
 import os
@@ -60,7 +60,7 @@ def banner():
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
-         Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
          Twitter: @jdubm31
          Type -h for help.
     ''')

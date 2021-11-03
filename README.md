@@ -139,7 +139,7 @@ python3 assisted_log_enabler.py
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
-         Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
          Twitter: @jdubm31
          Type -h for help.
 
