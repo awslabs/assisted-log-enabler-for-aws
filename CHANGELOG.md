@@ -166,3 +166,9 @@
 
 ### Changed
 * CloudTrail name to be more descriptive that it's created by Assisted Log Enabler for AWS.
+
+## [1.4.3] - 2021-11-03
+
+### Changed
+* References to Team DragonCat are now referred to Customer Incident Response Team (CIRT).
+* Various argparse help message to be more descriptive.

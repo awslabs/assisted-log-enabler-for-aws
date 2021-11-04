@@ -1,7 +1,7 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-# Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+# Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
 
 import logging
 import os
@@ -60,7 +60,7 @@ def banner():
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
-         Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
          Twitter: @jdubm31
          Type -h for help.
     ''')
@@ -75,14 +75,14 @@ def assisted_log_enabler():
     output_handle.setFormatter(formatter)
 
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
-    parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
+    parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account, cleanup, dryrun. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
     
-    function_parser_group = parser.add_argument_group('Service Options', 'Use these flags to choose which services you want to turn logging on for.')
+    function_parser_group = parser.add_argument_group('Single & Multi Account Options', 'Use these flags to choose which services you want to turn logging on for.')
     function_parser_group.add_argument('--all', action='store_true', help=' Turns on all of the log types within the Assisted Log Enabler for AWS.')
     function_parser_group.add_argument('--eks', action='store_true', help=' Turns on Amazon EKS audit & authenticator logs.')
     function_parser_group.add_argument('--vpcflow', action='store_true', help=' Turns on Amazon VPC Flow Logs.')
     function_parser_group.add_argument('--r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
-    function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail.')
+    function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail. Only available in Single Account version.')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
     cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Removes Amazon Route 53 Resolver Query Log resources created by Assisted Log Enabler for AWS.')
