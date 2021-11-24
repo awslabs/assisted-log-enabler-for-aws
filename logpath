@@ -1,0 +1,12 @@
+timestamp - Checking cert Amazon.com Internal Root Certificate Authority existence in keychain
+timestamp - Amazon.com Internal Root Certificate Authority found in system keychain
+timestamp - Checking cert Amazon.com InfoSec CA G4 ACM1 existence in keychain
+timestamp - Amazon.com InfoSec CA G4 ACM1 found in system keychain
+timestamp - Checking cert Amazon.com InfoSec CA G4 ACM2 existence in keychain
+timestamp - Amazon.com InfoSec CA G4 ACM2 found in system keychain
+timestamp - Checking cert Amazon.com InfoSec CA G4 Legacy existence in keychain
+timestamp - Amazon.com InfoSec CA G4 Legacy found in system keychain
+timestamp - Checking cert Amazon.com CIA CA G4 01 existence in keychain
+timestamp - Amazon.com CIA CA G4 01 found in system keychain
+timestamp - Checking cert Amazon.com CIA CA G4 02 existence in keychain
+timestamp - Amazon.com CIA CA G4 02 found in system keychain

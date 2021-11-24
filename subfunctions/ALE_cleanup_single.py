@@ -178,6 +178,35 @@ def vpcflow_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 4. Remove the S3 Logging Resources created by Assisted Log Enabler
+def s3_cleanup():
+    """Function to clean up Bucket Logs"""
+    logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
+            removal_list: list = []
+            s3 = boto3.client('s3')
+            logging.info("ListBuckets API Call")
+            buckets = s3.list_buckets()
+            logging.info("GetBucketLogging API Call")
+            for bucket in buckets['Buckets']:
+                s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
+                if 'TargetBucket' in str(s3temp):
+                    if 'aws-log-collection-' in str(s3temp):
+                        removal_list.append(bucket["Name"])
+            print(removal_list)
+            logging.info("PutBucketLogging API Call")
+            for bucket in removal_list:
+                delete_s3_log = s3.put_bucket_logging(
+                    Bucket=bucket,
+                    BucketLoggingStatus={}
+                )
+            logging.info("Deleted Bucket Logs that were created by Assisted Log Enabler for AWS.")
+            time.sleep(1)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
 
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
@@ -196,6 +225,10 @@ def run_r53_cleanup():
     r53_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_s3_cleanup():
+    """Function to run the s3_cleanup function"""
+    s3_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""

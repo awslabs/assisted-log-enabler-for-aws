@@ -82,6 +82,7 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--eks', action='store_true', help=' Turns on Amazon EKS audit & authenticator logs.')
     function_parser_group.add_argument('--vpcflow', action='store_true', help=' Turns on Amazon VPC Flow Logs.')
     function_parser_group.add_argument('--r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
+    function_parser_group.add_argument('--s3logs', action='store_true', help=' Turns on Amazon Bucket Logs.')
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail.')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
@@ -89,6 +90,7 @@ def assisted_log_enabler():
     cleanup_parser_group.add_argument('--single_cloudtrail', action='store_true', help=' Removes AWS CloudTrail trails created by Assisted Log Enabler for AWS.')
     cleanup_parser_group.add_argument('--single_vpcflow', action='store_true', help=' Removes Amazon VPC Flow Log resources created by Assisted Log Enabler for AWS.')
     cleanup_parser_group.add_argument('--single_all', action='store_true', help=' Turns off all of the log types within the Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_s3logs', action='store_true', help=' Removes Amazon Bucket Log resources created by Assisted Log Enabler for AWS.')
 
     dryrun_parser_group = parser.add_argument_group('Dry Run Options', 'Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.')
     dryrun_parser_group.add_argument('--single_account', action='store_true', help=' Runs Assisted Log Enabler for AWS in Dry Run mode for a single AWS account.')
@@ -106,6 +108,8 @@ def assisted_log_enabler():
             ALE_single_account.run_vpc_flow_logs()
         elif args.r53querylogs:
             ALE_single_account.run_r53_query_logs()
+        elif args.s3logs:
+            ALE_single_account.run_s3_logs()
         elif args.cloudtrail:
             ALE_single_account.run_cloudtrail()
         elif args.all:
@@ -119,6 +123,8 @@ def assisted_log_enabler():
             ALE_multi_account.run_vpc_flow_logs()
         elif args.r53querylogs:
             ALE_multi_account.run_r53_query_logs()
+        elif args.s3logs:
+            ALE_multi_account.run_s3_logs()
         elif args.all:
             ALE_multi_account.lambda_handler(event, context)
         else:
@@ -126,6 +132,8 @@ def assisted_log_enabler():
     elif args.mode == 'cleanup':
         if args.single_r53querylogs:
             ALE_cleanup_single.run_r53_cleanup()
+        elif args.single_s3logs:
+            ALE_cleanup_single.run_s3_cleanup()
         elif args.single_cloudtrail:
             ALE_cleanup_single.run_cloudtrail_cleanup()
         elif args.single_vpcflow:

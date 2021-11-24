@@ -185,6 +185,54 @@ def dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList):
             except Exception as exception_handle:
                 logging.error(exception_handle)
 
+# 7. Turn on S3 Logging.
+def s3_logs(region_list, account_number, OrgAccountIdList, unique_end):
+    """Function to turn on Bucket Logs for Buckets"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Turning on Bucket Logging on in AWS Account " + org_account + " Buckets, in region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            s3_ma = boto3.client(
+            's3',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                S3List: list = []
+                S3LogList: list = []
+                logging.info("ListBuckets API Call")
+                buckets = s3_ma.list_buckets()
+                for bucket in buckets['Buckets']:
+                    s3region=s3_ma.get_bucket_location(Bucket=bucket["Name"])['LocationConstraint']
+                    if s3region == aws_region:
+                        S3List.append(bucket["Name"])
+                    elif s3region is None and aws_region == 'us-east-1':
+                        S3List.append(bucket["Name"])
+                logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
+                print(S3List)
+                logging.info("GetBucketLogging API Call")
+                for bucket in S3List:
+                    s3temp=s3_ma.get_bucket_logging(Bucket=bucket)
+                    if 'TargetBucket' not in str(s3temp):
+                        S3LogList.append(bucket)
+                logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT Bucket Logs:")
+                if 'aws-log-collection-' + account_number + '-' + region + '-' + unique_end in str(S3LogList):
+                    S3LogList.remove('aws-log-collection-' + account_number + '-' + region + '-' + unique_end)
+                print(S3LogList)
+                for bucket in S3LogList:
+                    logging.info(bucket + " does not have Route 53 Query logging on. Running Assisted Log Enabler for AWS will turn this on.")
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
