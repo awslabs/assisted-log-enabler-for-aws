@@ -139,7 +139,7 @@ python3 assisted_log_enabler.py
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
-         Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+         Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
          Twitter: @jdubm31
          Type -h for help.
 
@@ -197,6 +197,8 @@ python3 assisted_log_enabler.py --mode single_account --vpcflow
 python3 assisted_log_enabler.py --mode single_account --r53querylogs
 # For AWS CloudTrail:
 python3 assisted_log_enabler.py --mode single_account --cloudtrail
+# For AWS S3 Logs:
+python3 assisted_log_enabler.py --mode single_account --s3logs
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)

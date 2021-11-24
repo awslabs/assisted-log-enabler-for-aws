@@ -1,7 +1,7 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-# Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+# Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
 
 
 import logging
@@ -123,10 +123,11 @@ def dryrun_route_53_query_logs(region_list, account_number):
             logging.error(exception_handle)
 
 # 5. Check if S3 Logging is on.
-def s3_logs(region_list, account_number, unique_end):
+def dryrun_s3_logs(region_list, account_number):
     """Function to turn on S3 Logs for Buckets"""
     for aws_region in region_list:
         logging.info("Turning on S3 Logging on for Buckets in region " + aws_region + ".")
+        s3 = boto3.client('s3', region_name=aws_region)
         try:
             S3List: list = []
             S3LogList: list = []
@@ -146,8 +147,6 @@ def s3_logs(region_list, account_number, unique_end):
                 if 'TargetBucket' not in str(s3temp):
                     S3LogList.append(bucket)
             logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT Bucket Logs:")
-            if 'aws-log-collection-' + account_number + '-' + region + '-' + unique_end in str(S3LogList):
-                S3LogList.remove('aws-log-collection-' + account_number + '-' + region + '-' + unique_end)
             print(S3LogList)
             for bucket in S3LogList:
                 logging.info(bucket + " does not have S3 Logging logging on. Running Assisted Log Enabler for AWS will turn this on.")

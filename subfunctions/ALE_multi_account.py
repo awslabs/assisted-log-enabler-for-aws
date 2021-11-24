@@ -1,7 +1,7 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-# Joshua "DozerCat" McKiddy - Team DragonCat - AWS
+# Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
 
 
 import logging
@@ -14,9 +14,10 @@ import argparse
 import csv
 import string
 import random
+import coloredlogs
 from botocore.exceptions import ClientError
 from datetime import timezone
-
+coloredlogs.install()
 
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
@@ -428,7 +429,7 @@ def run_r53_query_logs():
     route_53_query_logs(region_list, account_number, OrgAccountIdList, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def rs3_logs():
+def run_s3_logs():
     """Function that runs the defined Bucket Logging code"""
     unique_end = random_string_generator()
     account_number = get_account_number()
