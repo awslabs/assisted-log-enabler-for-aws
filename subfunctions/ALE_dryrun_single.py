@@ -144,20 +144,19 @@ def dryrun_s3_logs(region_list, account_number):
                 print(S3List)
                 logging.info("GetBucketLogging API Call")
                 for bucket in S3List:
-                    s3temp=s3.get_bucket_logging(Bucket=bucket)
-                    if 'TargetBucket' not in str(s3temp):
-                        S3LogList.append(bucket)
+                    if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                        s3temp=s3.get_bucket_logging(Bucket=bucket)
+                        if 'TargetBucket' not in str(s3temp):
+                            S3LogList.append(bucket)
+                if S3LogList != []:
+                    logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
+                    print(S3LogList)
+                    for bucket in S3LogList:
+                        logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
+                else:
+                    logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
             else: 
                 logging.info("No S3 Buckets found within account " + account_number + ", region " + aws_region + ":")
-            if S3LogList != []:
-                logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
-                if 'aws-log-collection-' + account_number + '-' + aws_region + '-' + unique_end in str(S3LogList):
-                    S3LogList.remove('aws-log-collection-' + account_number + '-' + aws_region + '-' + unique_end)
-                print(S3LogList)
-                for bucket in S3LogList:
-                    logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
-            else:
-                    logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
         except Exception as exception_handle:
             logging.error(exception_handle)
 

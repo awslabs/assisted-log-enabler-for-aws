@@ -183,28 +183,41 @@ def s3_cleanup():
     """Function to clean up Bucket Logs"""
     logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS.")
     for aws_region in region_list:
+        s3 = boto3.client('s3', region_name=aws_region)
         try:
             logging.info("---- LINE BREAK BETWEEN REGIONS ----")
             logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
             removal_list: list = []
-            s3 = boto3.client('s3')
             logging.info("ListBuckets API Call")
             buckets = s3.list_buckets()
-            logging.info("GetBucketLogging API Call")
             for bucket in buckets['Buckets']:
-                s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
-                if 'TargetBucket' in str(s3temp):
-                    if 'aws-log-collection-' in str(s3temp):
-                        removal_list.append(bucket["Name"])
-            print(removal_list)
-            logging.info("PutBucketLogging API Call")
-            for bucket in removal_list:
-                delete_s3_log = s3.put_bucket_logging(
-                    Bucket=bucket,
-                    BucketLoggingStatus={}
-                )
-            logging.info("Deleted Bucket Logs that were created by Assisted Log Enabler for AWS.")
-            time.sleep(1)
+                s3region=s3.get_bucket_location(Bucket=bucket["Name"])['LocationConstraint']
+                if s3region == aws_region:
+                    if 'aws-log-collection-' not in str(bucket["Name"]):
+                        logging.info("GetBucketLogging API Call for " + bucket["Name"])
+                        s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
+                        if 'aws-log-collection-' in str(s3temp):
+                            removal_list.append(bucket["Name"])
+                elif s3region is None and aws_region == 'us-east-1':
+                    if 'aws-log-collection-' not in str(bucket["Name"]):
+                        logging.info("GetBucketLogging API Call for " + bucket["Name"])
+                        s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
+                        if 'aws-log-collection-' in str(s3temp):
+                            removal_list.append(bucket["Name"])
+            if removal_list != []:
+                logging.info("List S3 Buckets with Logging enabled")
+                print(removal_list)
+                for bucket in removal_list:
+                    logging.info("Removing S3 Bucket Logging for " + bucket)
+                    logging.info("PutBucketLogging API Call")
+                    delete_s3_log = s3.put_bucket_logging(
+                        Bucket=bucket,
+                        BucketLoggingStatus={}
+                    )
+                logging.info("Removed S3 Bucket Logging created by Assisted Log Enabler for AWS.")
+                time.sleep(1)
+            else:
+                logging.info("There are no S3 Bucket set by Log Enabler in " + aws_region)
         except Exception as exception_handle:
             logging.error(exception_handle)
 
