@@ -10,10 +10,8 @@ import boto3
 import time
 import datetime
 import argparse
-import coloredlogs
 from botocore.exceptions import ClientError
 from datetime import timezone
-coloredlogs.install()
 
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
