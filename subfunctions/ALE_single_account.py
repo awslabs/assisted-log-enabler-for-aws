@@ -12,10 +12,8 @@ import time
 import datetime
 import string
 import random
-import coloredlogs
 from botocore.exceptions import ClientError
 from datetime import timezone
-coloredlogs.install()
 
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)

@@ -186,7 +186,7 @@ def dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList):
                 logging.error(exception_handle)
 
 # 7. Turn on S3 Logging.
-def s3_logs(region_list, account_number, OrgAccountIdList, unique_end):
+def s3_logs(region_list, account_number, OrgAccountIdList):
     """Function to turn on Bucket Logs for Buckets"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
