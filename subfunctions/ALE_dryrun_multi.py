@@ -186,7 +186,7 @@ def dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList):
                 logging.error(exception_handle)
 
 # 7. Turn on S3 Logging.
-def s3_logs(region_list, account_number, OrgAccountIdList):
+def dryrun_s3_logs(region_list, account_number, OrgAccountIdList):
     """Function to turn on Bucket Logs for Buckets"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
@@ -220,6 +220,8 @@ def s3_logs(region_list, account_number, OrgAccountIdList):
                 if S3List != []:
                     logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
                     print(S3List)
+                    logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                    logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
                     logging.info("GetBucketLogging API Call")
                     for bucket in S3List:
                         if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
@@ -246,6 +248,7 @@ def lambda_handler(event, context):
     dryrun_flow_log_activator(account_number, OrgAccountIdList, region_list)
     dryrun_eks_logging(region_list, OrgAccountIdList)
     dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList)
+    dryrun_s3_logs(region_list, account_number, OrgAccountIdList)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

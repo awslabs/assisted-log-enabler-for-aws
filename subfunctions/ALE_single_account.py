@@ -315,6 +315,8 @@ def s3_logs(region_list, account_number, unique_end):
             if S3List != []:
                 logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
                 print(S3List)
+                logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
                 logging.info("GetBucketLogging API Call")
                 for bucket in S3List:
                     if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
