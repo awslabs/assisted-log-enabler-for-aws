@@ -132,12 +132,6 @@ def create_bucket(organization_id, account_number, unique_end):
                 'RestrictPublicBuckets': True
             },
         )
-        logging.info("GetBucketAcl API Call")
-        id=s3.get_bucket_acl(Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end)['Owner']['ID']
-        logging.info("Setting the S3 bucket Public Access to Blocked")
-        logging.info("PutBucketAcl API Call")
-        s3.put_bucket_acl(Bucket='contacts-bucket-rkasa-864116802773-us-east-1',GrantReadACP='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantWrite='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantFullControl='id=' + id)
-
     except Exception as exception_handle:
         logging.error(exception_handle)
     return account_number

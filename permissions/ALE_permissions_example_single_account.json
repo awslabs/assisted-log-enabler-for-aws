@@ -33,7 +33,9 @@
                 "s3:ListAllMyBuckets",
                 "s3:GetBucketLocation",
                 "s3:GetBucketAcl",
-                "s3:PutBucketAcl"
+                "s3:PutBucketAcl",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:PutBucketLifecycleConfiguration"
             ],
             "Resource": "*",
             "Condition": {
