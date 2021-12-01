@@ -122,6 +122,45 @@ def dryrun_route_53_query_logs(region_list, account_number):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 5. Check if S3 Logging is on.
+def dryrun_s3_logs(region_list, account_number):
+    """Function to turn on S3 Logs for Buckets"""
+    for aws_region in region_list:
+        logging.info("Turning on S3 Logging on for Buckets in region " + aws_region + ".")
+        s3 = boto3.client('s3', region_name=aws_region)
+        try:
+            S3List: list = []
+            S3LogList: list = []
+            logging.info("ListBuckets API Call")
+            buckets = s3.list_buckets()
+            for bucket in buckets['Buckets']:
+                s3region=s3.get_bucket_location(Bucket=bucket["Name"])['LocationConstraint']
+                if s3region == aws_region:
+                    S3List.append(bucket["Name"])
+                elif s3region is None and aws_region == 'us-east-1':
+                    S3List.append(bucket["Name"])
+            if S3List != []:
+                logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
+                print(S3List)
+                logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
+                logging.info("GetBucketLogging API Call")
+                for bucket in S3List:
+                    if 'aws-s3-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                        s3temp=s3.get_bucket_logging(Bucket=bucket)
+                        if 'TargetBucket' not in str(s3temp):
+                            S3LogList.append(bucket)
+                if S3LogList != []:
+                    logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
+                    print(S3LogList)
+                    for bucket in S3LogList:
+                        logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
+                else:
+                    logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
+            else: 
+                logging.info("No S3 Buckets found within account " + account_number + ", region " + aws_region + ":")
+        except Exception as exception_handle:
+            logging.error(exception_handle)
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
@@ -129,6 +168,7 @@ def lambda_handler(event, context):
     dryrun_check_cloudtrail(account_number)
     dryrun_eks_logging(region_list)
     dryrun_route_53_query_logs(region_list, account_number)
+    dryrun_s3_logs(region_list, account_number)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

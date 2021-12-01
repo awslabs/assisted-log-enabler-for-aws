@@ -15,7 +15,6 @@ import random
 from botocore.exceptions import ClientError
 from datetime import timezone
 
-
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
 timestamp_date = datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d-%H%M%S")
@@ -296,6 +295,122 @@ def route_53_query_logs(region_list, account_number, unique_end):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 6. Turn on S3 Logging.
+def s3_logs(region_list, account_number, unique_end):
+    """Function to turn on S3 Logs for Buckets"""
+    for aws_region in region_list:
+        logging.info("Checking for S3 Logging on for Buckets in region " + aws_region + ".")
+        s3 = boto3.client('s3', region_name=aws_region)
+        try:
+            S3List: list = []
+            S3LogList: list = []
+            logging.info("ListBuckets API Call")
+            buckets = s3.list_buckets()
+            for bucket in buckets['Buckets']:
+                s3region=s3.get_bucket_location(Bucket=bucket["Name"])['LocationConstraint']
+                if s3region == aws_region:
+                    S3List.append(bucket["Name"])
+                elif s3region is None and aws_region == 'us-east-1':
+                    S3List.append(bucket["Name"])
+            if S3List != []:
+                logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
+                print(S3List)
+                logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
+                logging.info("GetBucketLogging API Call")
+                for bucket in S3List:
+                    if 'aws-s3-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                        s3temp=s3.get_bucket_logging(Bucket=bucket)
+                        if 'TargetBucket' not in str(s3temp):
+                            S3LogList.append(bucket)
+                if S3LogList != []:
+                    logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
+                    print(S3LogList)
+                    for bucket in S3LogList:
+                        logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
+                    logging.info("Creating S3 Logging Bucket")
+                    """Function to create the bucket for storing logs"""
+                    account_number = sts.get_caller_identity()["Account"]
+                    logging.info("Creating bucket in %s" % account_number)
+                    logging.info("CreateBucket API Call")
+                    if aws_region == 'us-east-1':
+                        logging_bucket_dict = s3.create_bucket(
+                            Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
+                        )
+                    else:
+                        logging_bucket_dict = s3.create_bucket(
+                            Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                            CreateBucketConfiguration={
+                                'LocationConstraint': aws_region
+                            }
+                        )
+                    logging.info("Bucket " + "aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end + " Created.")
+                    logging.info("Setting lifecycle policy.")
+                    logging.info("PutBucketLifecycleConfiguration API Call")
+                    lifecycle_policy = s3.put_bucket_lifecycle_configuration(
+                        Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        LifecycleConfiguration={
+                            'Rules': [
+                                {
+                                    'Expiration': {
+                                        'Days': 365
+                                    },
+                                    'Status': 'Enabled',
+                                    'Prefix': '',
+                                    'ID': 'LogStorage',
+                                    'Transitions': [
+                                        {
+                                            'Days': 90,
+                                            'StorageClass': 'INTELLIGENT_TIERING'
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    )
+                    logging.info("Lifecycle Policy successfully set.")
+                    logging.info("Setting the S3 bucket Public Access to Blocked")
+                    logging.info("PutPublicAccessBlock API Call")
+                    bucket_private = s3.put_public_access_block(
+                        Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        PublicAccessBlockConfiguration={
+                            'BlockPublicAcls': True,
+                            'IgnorePublicAcls': True,
+                            'BlockPublicPolicy': True,
+                            'RestrictPublicBuckets': True
+                        },
+                    )
+                    logging.info("GetBucketAcl API Call")
+                    id=s3.get_bucket_acl(Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end)['Owner']['ID']
+                    logging.info("PutBucketAcl API Call")
+                    s3.put_bucket_acl(Bucket="aws-s3-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,GrantReadACP='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantWrite='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantFullControl='id=' + id)
+                    for bucket in S3LogList:
+                        logging.info("Activating logs for S3 Bucket " + bucket)
+                        logging.info("PutBucketLogging API Call")
+                        create_s3_log = s3.put_bucket_logging(
+                            Bucket=bucket,
+                            BucketLoggingStatus={
+                                'LoggingEnabled': {
+                                    'TargetBucket': 'aws-s3-log-collection-' + account_number + '-' + aws_region + '-' + unique_end,
+                                    'TargetGrants': [
+                                        {
+                                            'Permission': 'FULL_CONTROL',
+                                            'Grantee': {
+                                                'Type': 'Group',
+                                                'URI': 'http://acs.amazonaws.com/groups/s3/LogDelivery'
+                                            },
+                                        },
+                                    ],
+                                    'TargetPrefix': 's3logs/' + bucket
+                                }
+                            }
+                        )
+                else:
+                    logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
+            else: 
+                logging.info("No S3 Buckets found within account " + account_number + ", region " + aws_region + ":")
+        except Exception as exception_handle:
+            logging.error(exception_handle)
 
 def run_eks():
     """Function that runs the defined EKS logging code"""
@@ -326,6 +441,13 @@ def run_r53_query_logs():
     route_53_query_logs(region_list, account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_s3_logs():
+    """Function that runs the defined S3 Logging code"""
+    unique_end = random_string_generator()
+    account_number = create_bucket(unique_end)
+    s3_logs(region_list, account_number, unique_end)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
@@ -335,6 +457,7 @@ def lambda_handler(event, context):
     check_cloudtrail(account_number, unique_end)
     eks_logging(region_list)
     route_53_query_logs(region_list, account_number, unique_end)
+    s3_logs(region_list, account_number, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

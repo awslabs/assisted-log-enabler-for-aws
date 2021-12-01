@@ -178,6 +178,52 @@ def vpcflow_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 4. Remove the S3 Logging Resources created by Assisted Log Enabler
+def s3_cleanup():
+    """Function to clean up Bucket Logs"""
+    logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        s3 = boto3.client('s3', region_name=aws_region)
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
+            removal_list: list = []
+            logging.info("ListBuckets API Call")
+            buckets = s3.list_buckets()
+            for bucket in buckets['Buckets']:
+                s3region=s3.get_bucket_location(Bucket=bucket["Name"])['LocationConstraint']
+                if s3region == aws_region:
+                    if 'aws-s3-log-collection-' not in str(bucket["Name"]):
+                        logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                        logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
+                        logging.info("GetBucketLogging API Call for " + bucket["Name"])
+                        s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
+                        if 'aws-s3-log-collection-' in str(s3temp):
+                            removal_list.append(bucket["Name"])
+                elif s3region is None and aws_region == 'us-east-1':
+                    if 'aws-s3-log-collection-' not in str(bucket["Name"]):
+                        logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
+                        logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
+                        logging.info("GetBucketLogging API Call for " + bucket["Name"])
+                        s3temp=s3.get_bucket_logging(Bucket=bucket["Name"])
+                        if 'aws-s3-log-collection-' in str(s3temp):
+                            removal_list.append(bucket["Name"])
+            if removal_list != []:
+                logging.info("List S3 Buckets with Logging enabled by by Assisted Log Enabler for AWS in " + aws_region)
+                print(removal_list)
+                for bucket in removal_list:
+                    logging.info("Removing S3 Bucket Logging for " + bucket)
+                    logging.info("PutBucketLogging API Call")
+                    delete_s3_log = s3.put_bucket_logging(
+                        Bucket=bucket,
+                        BucketLoggingStatus={}
+                    )
+                logging.info("Removed S3 Bucket Logging created by Assisted Log Enabler for AWS.")
+                time.sleep(1)
+            else:
+                logging.info("There are no S3 Bucket set by Log Enabler in " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
 
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
@@ -196,6 +242,10 @@ def run_r53_cleanup():
     r53_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_s3_cleanup():
+    """Function to run the s3_cleanup function"""
+    s3_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
