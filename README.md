@@ -6,6 +6,7 @@ With Assisted Log Enabler for AWS, logging is turned on automatically for the va
 * AWS CloudTrail (Single Account Only)
 * Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using AWS Organizations)
 * Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using AWS Organizations)
+* NEW! Amazon S3 Server Access Logs (Single Account and Multi-Account using AWS Organizations)
 
 Link to related AWS Open Source Blog Post: [Introducing Assisted Log Enabler for AWS](https://aws.amazon.com/blogs/opensource/introducing-assisted-log-enabler-for-aws/)
 
@@ -20,6 +21,10 @@ When this work is performed, the customer can be assured that logging within the
 The following is a simple diagram on how Assisted Log Enabler for AWS works in a single account, in order to turn on logging for customers.
 
 ![Alt text](diagrams/assisted_log_enabler.png)
+
+NEW! The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Amazon S3 Server Access Logging in a single account:
+
+![Alt text](diagrams/assisted_log_enabler_s3.png)
 
 ## Prerequisites
 ### Permissions
@@ -48,6 +53,15 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "route53resolver:ListTagsForResource",
 "route53resolver:DisassociateResolverQueryLogConfig",
 "route53resolver:DeleteResolverQueryLogConfig"
+"s3:PutBucketLogging",
+"s3:GetBucketLogging",
+"s3:ListBucket",
+"s3:ListAllMyBuckets",
+"s3:GetBucketLocation",
+"s3:GetBucketAcl",
+"s3:PutBucketAcl",
+"s3:PutBucketPublicAccessBlock",
+"s3:PutBucketLifecycleConfiguration"
 
 # For adding AWS CloudTrail logs:
 "s3:GetBucketPolicy",
@@ -86,7 +100,18 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "route53resolver:AssociateResolverQueryLogConfig",
 "iam:CreateServiceLinkRole" # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
 
-# NEW! For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
+# NEW! For adding Amazon S3 Server Access Logs:
+"s3:PutBucketLogging",
+"s3:GetBucketLogging",
+"s3:ListBucket",
+"s3:ListAllMyBuckets",
+"s3:GetBucketLocation",
+"s3:GetBucketAcl",
+"s3:PutBucketAcl",
+"s3:PutBucketPublicAccessBlock",
+"s3:PutBucketLifecycleConfiguration"
+
+# For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
 "route53resolver:ListResolverQueryLogConfigs",
 "route53resolver:ListTagsForResource",
 "route53resolver:ListResolverQueryLogConfigAssociations",
@@ -110,6 +135,9 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
 * If Amazon EKS Clusters exist, audit & authenticator logs are turned on.
 * Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
+* NEW! Amazon S3 Server Access Logs are created for buckets that do not have it turned on already.
+   * This does not include for S3 buckets created by Assisted Log Enabler for AWS
+   * Amazon S3 Server Access Logs require buckets that reside in the same account & region, so additional buckets for Amazon S3 Server Access logs are created for this.
 
 
 ## Running the Code
@@ -149,27 +177,58 @@ No valid option selected. Please run with -h to display valid options.
 ```
 python3 assisted_log_enabler.py -h
 usage: assisted_log_enabler.py [-h] [--mode MODE] [--all] [--eks] [--vpcflow]
-                               [--r53querylogs] [--cloudtrail]
+                               [--r53querylogs] [--s3logs] [--cloudtrail]
+                               [--single_r53querylogs] [--single_cloudtrail]
+                               [--single_vpcflow] [--single_all]
+                               [--single_s3logs] [--single_account]
+                               [--multi_account]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
 
 optional arguments:
-  -h, --help      show this help message and exit
-  --mode MODE     Choose the mode that you want to run Assisted Log Enabler
-                  in. Available modes: single_account, multi_account. WARNING:
-                  For multi_account, You must have the associated
-                  CloudFormation template deployed as a StackSet. See the
-                  README file for more details.
+  -h, --help            show this help message and exit
+  --mode MODE           Choose the mode that you want to run Assisted Log
+                        Enabler in. Available modes: single_account,
+                        multi_account, cleanup, dryrun. WARNING: For
+                        multi_account, You must have the associated
+                        CloudFormation template deployed as a StackSet. See
+                        the README file for more details.
 
-Service Options:
+Single & Multi Account Options:
   Use these flags to choose which services you want to turn logging on for.
 
-  --all           Turns on all of the log types within the Assisted Log
-                  Enabler for AWS.
-  --eks           Turns on Amazon EKS audit & authenticator logs.
-  --vpcflow       Turns on Amazon VPC Flow Logs.
-  --r53querylogs  Turns on Amazon Route 53 Resolver Query Logs.
-  --cloudtrail    Turns on AWS CloudTrail.
+  --all                 Turns on all of the log types within the Assisted Log
+                        Enabler for AWS.
+  --eks                 Turns on Amazon EKS audit & authenticator logs.
+  --vpcflow             Turns on Amazon VPC Flow Logs.
+  --r53querylogs        Turns on Amazon Route 53 Resolver Query Logs.
+  --s3logs              Turns on Amazon Bucket Logs.
+  --cloudtrail          Turns on AWS CloudTrail.
+
+Cleanup Options:
+  Use these flags to choose which resources you want to turn logging off
+  for.
+
+  --single_r53querylogs
+                        Removes Amazon Route 53 Resolver Query Log resources
+                        created by Assisted Log Enabler for AWS.
+  --single_cloudtrail   Removes AWS CloudTrail trails created by Assisted Log
+                        Enabler for AWS.
+  --single_vpcflow      Removes Amazon VPC Flow Log resources created by
+                        Assisted Log Enabler for AWS.
+  --single_all          Turns off all of the log types within the Assisted Log
+                        Enabler for AWS.
+  --single_s3logs       Removes Amazon Bucket Log resources created by
+                        Assisted Log Enabler for AWS.
+
+Dry Run Options:
+  Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.
+
+  --single_account      Runs Assisted Log Enabler for AWS in Dry Run mode for
+                        a single AWS account.
+  --multi_account       Runs Assisted Log Enabler for AWS in Dry Run mode for
+                        a multi-account AWS environment, using AWS
+                        Organizations.
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, single account mode)
@@ -197,7 +256,7 @@ python3 assisted_log_enabler.py --mode single_account --vpcflow
 python3 assisted_log_enabler.py --mode single_account --r53querylogs
 # For AWS CloudTrail:
 python3 assisted_log_enabler.py --mode single_account --cloudtrail
-# For AWS S3 Logs:
+# NEW! For Amazon S3 Server Access Logs:
 python3 assisted_log_enabler.py --mode single_account --s3logs
 ```
 
@@ -256,6 +315,8 @@ python3 assisted_log_enabler.py --mode multi_account --eks
 python3 assisted_log_enabler.py --mode multi_account --vpcflow
 # For Amazon Route 53 Resolver Query Logs:
 python3 assisted_log_enabler.py --mode multi_account --r53querylogs
+# NEW! For Amazon S3 Server Access Logs:
+python3 assisted_log_enabler.py --mode multi_account --s3logs
 
 ```
 
@@ -288,7 +349,7 @@ To run Assisted Log Enabler for AWS in Dry Run mode, you can use the commands be
 # Single Account Dry Run
 python3 assisted_log_enabler.py --mode dryrun --single_account
 # Multi-Account Dry Run
-python3 assisted_log_enabler.py --mode dryrun --single_account
+python3 assisted_log_enabler.py --mode dryrun --multi_account
 ```
 
 ## Cleaning Up
@@ -305,6 +366,8 @@ python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 python3 assisted_log_enabler.py --mode cleanup --single_vpcflow
 # To remove AWS CloudTrail trails created by Assisted Log Enabler for AWS (single account):
 python3 assisted_log_enabler.py --mode cleanup --single_cloudtrail
+# NEW! To remove Amazon S3 Server Access logging created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_s3logs
 ```
 
 ## Shared Responsibility Model
