@@ -218,25 +218,25 @@ def dryrun_s3_logs(region_list, account_number, OrgAccountIdList):
                     elif s3region is None and aws_region == 'us-east-1':
                         S3List.append(bucket["Name"])
                 if S3List != []:
-                    logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
+                    logging.info("List of Buckets found within account " + org_account + ", region " + aws_region + ":")
                     print(S3List)
                     logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
                     logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
                     logging.info("GetBucketLogging API Call")
                     for bucket in S3List:
-                        if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                        if 'aws-log-collection-' + org_account + '-' + aws_region not in str(bucket):
                             s3temp=s3_ma.get_bucket_logging(Bucket=bucket)
                             if 'TargetBucket' not in str(s3temp):
                                 S3LogList.append(bucket)
                     if S3LogList != []:
-                        logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
+                        logging.info("List of Buckets found within account " + org_account + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
                         print(S3LogList)
                         for bucket in S3LogList:
                             logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
                     else:
-                        logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
+                        logging.info("No S3 Bucket WITHOUT Logging enabled on account " + org_account + " region " + aws_region)
                 else: 
-                    logging.info("No S3 Buckets found within account " + account_number + ", region " + aws_region + ":")
+                    logging.info("No S3 Buckets found within account " + org_account + ", region " + aws_region + ":")
             except Exception as exception_handle:
                 logging.error(exception_handle)
 

@@ -364,84 +364,77 @@ def s3_logs(region_list, account_number, OrgAccountIdList, unique_end):
                     elif s3region is None and aws_region == 'us-east-1':
                         S3List.append(bucket["Name"])
                 if S3List != []:
-                    logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + ":")
+                    logging.info("List of Buckets found within account " + org_account + ", region " + aws_region + ":")
                     print(S3List)
                     logging.info("Parsed out buckets created by Assisted Log Enabler for AWS in " + aws_region)
                     logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
                     logging.info("GetBucketLogging API Call")
                     for bucket in S3List:
-                        if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                        if 'aws-s3-log-collection-' + org_account + '-' + aws_region not in str(bucket):
                             s3temp=s3_ma.get_bucket_logging(Bucket=bucket)
                             if 'TargetBucket' not in str(s3temp):
                                 S3LogList.append(bucket)
                     if S3LogList != []:
-                        logging.info("List of Buckets found within account " + account_number + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
+                        logging.info("List of Buckets found within account " + org_account + ", region " + aws_region + " WITHOUT S3 Bucket Logs:")
                         print(S3LogList)
                         for bucket in S3LogList:
                             logging.info(bucket + " does not have S3 BUCKET logging on. It will be turned on within this function.")
-                        if aws_region == region and org_account == account_number:
-                            logging.info("Updating S3 Logging ACL for Bucket " + "aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end)
-                            logging.info("GetBucketAcl API Call")
-                            id=s3_ma.get_bucket_acl(Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end)['Owner']['ID']
-                            logging.info("PutBucketAcl API Call")
-                            s3_ma.put_bucket_acl(Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,GrantReadACP='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantWrite='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantFullControl='id=' + id)
-                        else: 
-                            logging.info("Creating S3 Logging Bucket")
-                            """Function to create the bucket for storing logs"""
-                            account_number = sts.get_caller_identity()["Account"]
-                            logging.info("Creating bucket in %s" % account_number)
-                            logging.info("CreateBucket API Call")
-                            if aws_region == 'us-east-1':
-                                logging_bucket_dict = s3_ma.create_bucket(
-                                    Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
-                                )
-                            else:
-                                logging_bucket_dict = s3_ma.create_bucket(
-                                    Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
-                                    CreateBucketConfiguration={
-                                        'LocationConstraint': aws_region
-                                    }
-                                )
-                            logging.info("Bucket " + "aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end + " Created.")
-                            logging.info("Setting lifecycle policy.")
-                            logging.info("PutBucketLifecycleConfiguration API Call")
-                            lifecycle_policy = s3_ma.put_bucket_lifecycle_configuration(
-                                Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
-                                LifecycleConfiguration={
-                                    'Rules': [
-                                        {
-                                            'Expiration': {
-                                                'Days': 365
-                                            },
-                                            'Status': 'Enabled',
-                                            'Prefix': '',
-                                            'ID': 'LogStorage',
-                                            'Transitions': [
-                                                {
-                                                    'Days': 90,
-                                                    'StorageClass': 'INTELLIGENT_TIERING'
-                                                }
-                                            ]
-                                        }
-                                    ]
+                        logging.info("Creating S3 Logging Bucket")
+                        """Function to create the bucket for storing logs"""
+                        account_number = sts.get_caller_identity()["Account"]
+                        logging.info("Creating bucket in %s" % org_account)
+                        logging.info("CreateBucket API Call")
+                        if aws_region == 'us-east-1':
+                            logging_bucket_dict = s3_ma.create_bucket(
+                                Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end
+                            )
+                        else:
+                            logging_bucket_dict = s3_ma.create_bucket(
+                                Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
+                                CreateBucketConfiguration={
+                                    'LocationConstraint': aws_region
                                 }
                             )
-                            logging.info("Lifecycle Policy successfully set.")
-                            logging.info("Setting the S3 bucket Public Access to Blocked")
-                            logging.info("PutPublicAccessBlock API Call")
-                            bucket_private = s3_ma.put_public_access_block(
-                                Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
-                                PublicAccessBlockConfiguration={
-                                    'BlockPublicAcls': True,
-                                    'IgnorePublicAcls': True,
-                                    'BlockPublicPolicy': True,
-                                    'RestrictPublicBuckets': True
-                                },
-                            )
-                            logging.info("GetBucketAcl API Call")
-                            id=s3_ma.get_bucket_acl(Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end)['Owner']['ID']
-                            logging.info("PutBucketAcl API Call")
-                            s3_ma.put_bucket_acl(Bucket="aws-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,GrantReadACP='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantWrite='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantFullControl='id=' + id)
+                        logging.info("Bucket " + "aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end + " Created.")
+                        logging.info("Setting lifecycle policy.")
+                        logging.info("PutBucketLifecycleConfiguration API Call")
+                        lifecycle_policy = s3_ma.put_bucket_lifecycle_configuration(
+                            Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
+                            LifecycleConfiguration={
+                                'Rules': [
+                                    {
+                                        'Expiration': {
+                                            'Days': 365
+                                        },
+                                        'Status': 'Enabled',
+                                        'Prefix': '',
+                                        'ID': 'LogStorage',
+                                        'Transitions': [
+                                            {
+                                                'Days': 90,
+                                                'StorageClass': 'INTELLIGENT_TIERING'
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        )
+                        logging.info("Lifecycle Policy successfully set.")
+                        logging.info("Setting the S3 bucket Public Access to Blocked")
+                        logging.info("PutPublicAccessBlock API Call")
+                        bucket_private = s3_ma.put_public_access_block(
+                            Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
+                            PublicAccessBlockConfiguration={
+                                'BlockPublicAcls': True,
+                                'IgnorePublicAcls': True,
+                                'BlockPublicPolicy': True,
+                                'RestrictPublicBuckets': True
+                            },
+                        )
+                        logging.info("GetBucketAcl API Call")
+                        id=s3_ma.get_bucket_acl(Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end)['Owner']['ID']
+                        logging.info("PutBucketAcl API Call")
+                        s3_ma.put_bucket_acl(Bucket="aws-s3-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,GrantReadACP='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantWrite='uri=http://acs.amazonaws.com/groups/s3/LogDelivery',GrantFullControl='id=' + id)
                         for bucket in S3LogList:
                             logging.info("Activating logs for S3 Bucket " + bucket)
                             logging.info("PutBucketLogging API Call")
@@ -449,7 +442,7 @@ def s3_logs(region_list, account_number, OrgAccountIdList, unique_end):
                                 Bucket=bucket,
                                 BucketLoggingStatus={
                                     'LoggingEnabled': {
-                                        'TargetBucket': 'aws-log-collection-' + account_number + '-' + aws_region + '-' + unique_end,
+                                        'TargetBucket': 'aws-s3-log-collection-' + org_account + '-' + aws_region + '-' + unique_end,
                                         'TargetGrants': [
                                             {
                                                 'Permission': 'FULL_CONTROL',
@@ -464,9 +457,9 @@ def s3_logs(region_list, account_number, OrgAccountIdList, unique_end):
                                 }
                             )
                     else:
-                        logging.info("No S3 Bucket WITHOUT Logging enabled on account " + account_number + " region " + aws_region)
+                        logging.info("No S3 Bucket WITHOUT Logging enabled on account " + org_account + " region " + aws_region)
                 else: 
-                    logging.info("No S3 Buckets found within account " + account_number + ", region " + aws_region + ":")
+                    logging.info("No S3 Buckets found within account " + org_account + ", region " + aws_region + ":")
             except Exception as exception_handle:
                 logging.error(exception_handle)
 

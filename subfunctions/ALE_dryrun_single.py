@@ -146,7 +146,7 @@ def dryrun_s3_logs(region_list, account_number):
                 logging.info("Checking remaining buckets to see if logs were enabled by Assisted Log Enabler for AWS in " + aws_region)
                 logging.info("GetBucketLogging API Call")
                 for bucket in S3List:
-                    if 'aws-log-collection-' + account_number + '-' + aws_region not in str(bucket):
+                    if 'aws-s3-log-collection-' + account_number + '-' + aws_region not in str(bucket):
                         s3temp=s3.get_bucket_logging(Bucket=bucket)
                         if 'TargetBucket' not in str(s3temp):
                             S3LogList.append(bucket)
