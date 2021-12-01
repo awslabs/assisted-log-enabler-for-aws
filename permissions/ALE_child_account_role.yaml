@@ -50,6 +50,15 @@ Resources:
               - route53resolver:ListResolverQueryLogConfigAssociations
               - route53resolver:CreateResolverQueryLogConfig
               - route53resolver:AssociateResolverQueryLogConfig
+              - s3:PutBucketLogging
+              - s3:GetBucketLogging
+              - s3:ListBucket
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+              - s3:GetBucketAcl
+              - s3:PutBucketAcl
+              - s3:PutBucketPublicAccessBlock
+              - s3:PutBucketLifecycleConfiguration
             Resource: '*'
             Condition:
               StringEquals:

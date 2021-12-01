@@ -172,3 +172,13 @@
 ### Changed
 * References to Team DragonCat are now referred to Customer Incident Response Team (CIRT).
 * Various argparse help message to be more descriptive.
+
+## [1.5.0] - 2021-12-01
+
+###  Added
+* Ability to turn on Amazon S3 Server Access logs within single and multi-account modes.
+    * Added Dry Run capabilities for Amazon S3 Server Access logs within single and multi-account modes.
+    * Added Cleanup capabilities for Amazon S3 Server Access logs created by Assisted Log Enabler within single account mode.
+* Updated help (-h) message example within the README.
+* Permissions examples for enabling Amazon S3 Server Access logs within the permissions directory.
+* Diagram for Amazon S3 Server Access Logs within the README.
