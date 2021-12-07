@@ -241,6 +241,70 @@ def dryrun_s3_logs(region_list, account_number, OrgAccountIdList):
                 logging.error(exception_handle)
 
 
+# 8. Turn on LB Logging.
+def dryrun_lb_logs(region_list, account_number, OrgAccountIdList):
+    """Function to turn on Load Balancer Logs"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Turning on Load Balancer Logging on in AWS Account " + org_account + " in region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            elbv1_ma = boto3.client(
+            'elb',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            elbv2_ma = boto3.client(
+            'elbv2',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                ELBList: list = []
+                ELBLogList: list = []
+                ELBv1LogList: list = []
+                ELBv2LogList: list = []
+                logging.info("DescribeLoadBalancers API Call")
+                ELBList = elbv1_ma.describe_load_balancers()
+                for lb in ELBList['LoadBalancerDescriptions']:
+                    logging.info("DescribeLoadBalancerAttibute API Call")
+                    lblog=elbv1_ma.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
+                    logging.info("Parsing out for Access Logging")
+                    if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == False:
+                        ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
+                logging.info("DescribeLoadBalancers v2 API Call")
+                ELBList = elbv2_ma.describe_load_balancers()
+                for lb in ELBList['LoadBalancers']:
+                    logging.info("DescribeLoadBalancerAttibute v2 API Call")
+                    lblog=elbv2_ma.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                    for lbtemp in lblog['Attributes']:
+                        logging.info("Parsing out for Access Logging")
+                        if lbtemp['Key'] == 'access_logs.s3.enabled':
+                            if lbtemp['Value'] == 'false':
+                                ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
+                ELBLogList=ELBv1LogList+ELBv2LogList      
+                if ELBLogList != []:
+                    logging.info("List of Load Balancers found within account " + account_number + ", region " + aws_region + " without logging enabled:")
+                    print(ELBLogList)
+                    for elb in ELBLogList:
+                        logging.info(elb[0] + " does not have Load Balancer logging on. It will be turned on within this function.")
+                    logging.info("Creating S3 Logging Bucket for Load Balancers")
+                else: 
+                    logging.info("No Load Balancers WITHOUT logging found within account " + account_number + ", region " + aws_region + ":")
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = get_account_number()
@@ -249,6 +313,7 @@ def lambda_handler(event, context):
     dryrun_eks_logging(region_list, OrgAccountIdList)
     dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList)
     dryrun_s3_logs(region_list, account_number, OrgAccountIdList)
+    dryrun_lb_logs(region_list, account_number, OrgAccountIdList)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

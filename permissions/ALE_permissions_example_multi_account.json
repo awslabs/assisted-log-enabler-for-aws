@@ -34,7 +34,13 @@
                 "s3:GetBucketAcl",
                 "s3:PutBucketAcl",
                 "s3:PutBucketPublicAccessBlock",
-                "s3:PutBucketLifecycleConfiguration"
+                "s3:PutBucketLifecycleConfiguration",
+                "elb:DescribeLoadBalancers",
+                "elb:DescribeLoadBalancerAttributes",
+                "elb:ModifyLoadBalancerAttributes",
+                "elbv2:DescribeLoadBalancers",
+                "elbv2:DescribeLoadBalancerAttributes",
+                "elbv2:ModifyLoadBalancerAttributes"
             ],
             "Resource": "*",
             "Condition": {
