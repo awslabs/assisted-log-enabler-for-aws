@@ -388,6 +388,7 @@ For answers to cost-related questions involved with this solution, refer to the 
 * Amazon VPC Flow Logs Pricing: [Link](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
 * Amazon Route 53 Pricing (look for the Route 53 Resolver Query Logs section): [Link](https://aws.amazon.com/route53/pricing/)
 * Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+* Amazon S3 Access Logging: [Link](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html)
 
 
 ## Feedback
