@@ -183,7 +183,7 @@
 * Permissions examples for enabling Amazon S3 Server Access logs within the permissions directory.
 * Diagram for Amazon S3 Server Access Logs within the README.
 
-## [1.5.1] - 2021-12-14
+## [1.5.1] - 2021-12-15
 
 ### Added
 * Link for Amazon S3 Server Access Logging in the Costs section within the README.
