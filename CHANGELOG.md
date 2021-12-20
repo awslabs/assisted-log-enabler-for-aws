@@ -187,3 +187,6 @@
 
 ### Added
 * Link for Amazon S3 Server Access Logging in the Costs section within the README.
+
+### Changed
+* Header for Permissions JSON template
