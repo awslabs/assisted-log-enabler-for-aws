@@ -167,7 +167,7 @@ def dryrun_lb_logs(region_list, account_number):
     """Function to turn on S3 Logs for Buckets"""
     for aws_region in region_list:
         logging.info("Checking for LB Logging on in region " + aws_region + ".")
-        elbclient = boto3.client('elb', region_name=aws_region)
+        elbv1client = boto3.client('elb', region_name=aws_region)
         elbv2client = boto3.client('elbv2', region_name=aws_region)
         account_number = sts.get_caller_identity()["Account"]
         try:
