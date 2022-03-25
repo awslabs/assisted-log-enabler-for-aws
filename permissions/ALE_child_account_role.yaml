@@ -65,6 +65,10 @@ Resources:
               - elbv2:DescribeLoadBalancers
               - elbv2:DescribeLoadBalancerAttributes
               - elbv2:ModifyLoadBalancerAttributes
+              - elasticloadbalancing:DescribeLoadBalancers
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
+              - elasticloadbalancing:ModifyLoadBalancerAttributes
+              - eks:ListClusters
             Resource: '*'
             Condition:
               StringEquals:
