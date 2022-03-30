@@ -27,6 +27,10 @@ The following is a simple diagram on how Assisted Log Enabler for AWS works with
 
 ![Alt text](diagrams/assisted_log_enabler_s3.png)
 
+The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Elastic Load Balancing Access Logging in a single account:
+
+![Alt text](diagrams/assisted_log_enabler_s3.png)
+
 ## Prerequisites
 ### Permissions
 The following permissions are needed within AWS IAM for Assisted Log Enabler for AWS to run. Please see each section for a breakdown per AWS Service and functionality:
@@ -410,6 +414,7 @@ For answers to cost-related questions involved with this solution, refer to the 
 * Amazon VPC Flow Logs Pricing: [Link](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
 * Amazon Route 53 Pricing (look for the Route 53 Resolver Query Logs section): [Link](https://aws.amazon.com/route53/pricing/)
 * Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+* Elastic Load Balancing Logging: [Link](https://aws.amazon.com/elasticloadbalancing/pricing/)
 
 
 ## Feedback
