@@ -29,7 +29,7 @@ The following is a simple diagram on how Assisted Log Enabler for AWS works with
 
 The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Elastic Load Balancing Access Logging in a single account:
 
-![Alt text](diagrams/assisted_log_enabler_s3.png)
+![Alt text](diagrams/assisted_log_enabler_lb.png)
 
 ## Prerequisites
 ### Permissions
