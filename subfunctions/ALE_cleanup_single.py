@@ -245,7 +245,7 @@ def lb_cleanup():
             for lb in ELBList1['LoadBalancerDescriptions']:
                 logging.info("DescribeLoadBalancerAttibute API Call")
                 lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
-                logging.info("Parsing out for Access Logging")
+                logging.info("Parsing out for ELB Access Logging")
                 if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == True:
                     if 'aws-lb-log-collection-' in str(lblog['LoadBalancerAttributes']['AccessLog']['S3BucketName']):
                         ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
@@ -254,8 +254,8 @@ def lb_cleanup():
             for lb in ELBList2['LoadBalancers']:
                 logging.info("DescribeLoadBalancerAttibute v2 API Call")
                 lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                logging.info("Parsing out for ELBv2 Access Logging")
                 for lbtemp in lblog['Attributes']:
-                    logging.info("Parsing out for Access Logging")
                     if lbtemp['Key'] == 'access_logs.s3.enabled':
                         if lbtemp['Value'] == 'true':
                             for lbtemp2 in lblog['Attributes']:
