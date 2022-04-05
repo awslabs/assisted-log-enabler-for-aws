@@ -421,6 +421,7 @@ def lb_logs(region_list, unique_end):
         elbv1client = boto3.client('elb', region_name=aws_region)
         elbv2client = boto3.client('elbv2', region_name=aws_region)
         account_number = sts.get_caller_identity()["Account"]
+        logging.info("Checking for Load Balancers in the account " + account_number + ", region " + aws_region)
         try:
             ELBList: list = []
             ELBLogList: list = []
@@ -431,7 +432,7 @@ def lb_logs(region_list, unique_end):
             for lb in ELBList['LoadBalancerDescriptions']:
                 logging.info("DescribeLoadBalancerAttibute API Call")
                 lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
-                logging.info("Parsing out for Access Logging")
+                logging.info("Parsing out for ELB Access Logging")
                 if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == False:
                     ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
             logging.info("DescribeLoadBalancers v2 API Call")
@@ -440,7 +441,7 @@ def lb_logs(region_list, unique_end):
                 logging.info("DescribeLoadBalancerAttibute v2 API Call")
                 lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
                 for lbtemp in lblog['Attributes']:
-                    logging.info("Parsing out for Access Logging")
+                    logging.info("Parsing out for ELBv2 Access Logging")
                     if lbtemp['Key'] == 'access_logs.s3.enabled':
                         if lbtemp['Value'] == 'false':
                             ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
