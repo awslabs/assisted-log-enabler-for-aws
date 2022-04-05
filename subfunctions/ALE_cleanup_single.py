@@ -232,7 +232,8 @@ def lb_cleanup():
     for aws_region in region_list:
         elbv1client = boto3.client('elb', region_name=aws_region)
         elbv2client = boto3.client('elbv2', region_name=aws_region)
-        ELBList: list = []
+        ELBList1: list = []
+        ELBList2: list = []
         ELBv1LogList: list = []
         ELBv2LogList: list = []
         removal_list: list = []
@@ -240,16 +241,17 @@ def lb_cleanup():
             logging.info("---- LINE BREAK BETWEEN REGIONS ----")
             logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
             logging.info("DescribeLoadBalancers API Call")
-            ELBList = elbv1client.describe_load_balancers()
-            for lb in ELBList['LoadBalancerDescriptions']:
+            ELBList1 = elbv1client.describe_load_balancers()
+            for lb in ELBList1['LoadBalancerDescriptions']:
                 logging.info("DescribeLoadBalancerAttibute API Call")
                 lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
                 logging.info("Parsing out for Access Logging")
                 if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == True:
                     if 'aws-lb-log-collection-' in str(lblog['LoadBalancerAttributes']['AccessLog']['S3BucketName']):
                         ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
-            ELBList = elbv2client.describe_load_balancers()
-            for lb in ELBList['LoadBalancers']:
+            logging.info("DescribeLoadBalancers v2 API Call")
+            ELBList2 = elbv2client.describe_load_balancers()
+            for lb in ELBList2['LoadBalancers']:
                 logging.info("DescribeLoadBalancerAttibute v2 API Call")
                 lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
                 for lbtemp in lblog['Attributes']:
