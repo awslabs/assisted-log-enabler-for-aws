@@ -417,11 +417,10 @@ def s3_logs(region_list, unique_end):
 def lb_logs(region_list, unique_end):
     """Function to turn on LB Logs"""
     for aws_region in region_list:
-        logging.info("Checking for LB Logging on in region " + aws_region + ".")
         elbv1client = boto3.client('elb', region_name=aws_region)
         elbv2client = boto3.client('elbv2', region_name=aws_region)
         account_number = sts.get_caller_identity()["Account"]
-        logging.info("Checking for Load Balancers in the account " + account_number + ", region " + aws_region)
+        logging.info("Checking for Load Balancer Logging in the account " + account_number + ", region " + aws_region)
         try:
             ELBList: list = []
             ELBLogList: list = []
