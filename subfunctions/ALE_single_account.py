@@ -440,8 +440,8 @@ def lb_logs(region_list, unique_end):
             for lb in ELBList2['LoadBalancers']:
                 logging.info("DescribeLoadBalancerAttibute v2 API Call")
                 lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                logging.info("Parsing out for ELBv2 Access Logging")
                 for lbtemp in lblog['Attributes']:
-                    logging.info("Parsing out for ELBv2 Access Logging")
                     if lbtemp['Key'] == 'access_logs.s3.enabled':
                         if lbtemp['Value'] == 'false':
                             ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
