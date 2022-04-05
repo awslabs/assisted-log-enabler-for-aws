@@ -164,32 +164,33 @@ def dryrun_s3_logs(region_list, account_number):
 
 # 6. Check if Load Balancer Logging is on.
 def dryrun_lb_logs(region_list, account_number):
-    """Function to turn on S3 Logs for Buckets"""
+    """Function to turn on LB Logs"""
     for aws_region in region_list:
-        logging.info("Checking for LB Logging on in region " + aws_region + ".")
         elbv1client = boto3.client('elb', region_name=aws_region)
         elbv2client = boto3.client('elbv2', region_name=aws_region)
         account_number = sts.get_caller_identity()["Account"]
+        logging.info("Checking for Load Balancer Logging in the account " + account_number + ", region " + aws_region)
         try:
-            ELBList: list = []
+            ELBList1: list = []
+            ELBList2: list = []
             ELBLogList: list = []
             ELBv1LogList: list = []
             ELBv2LogList: list = []
             logging.info("DescribeLoadBalancers API Call")
-            ELBList = elbv1client.describe_load_balancers()
-            for lb in ELBList['LoadBalancerDescriptions']:
+            ELBList1 = elbv1client.describe_load_balancers()
+            for lb in ELBList1['LoadBalancerDescriptions']:
                 logging.info("DescribeLoadBalancerAttibute API Call")
                 lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
-                logging.info("Parsing out for Access Logging")
+                logging.info("Parsing out for ELB Access Logging")
                 if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == False:
                     ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
             logging.info("DescribeLoadBalancers v2 API Call")
-            ELBList = elbv2client.describe_load_balancers()
-            for lb in ELBList['LoadBalancers']:
+            ELBList2 = elbv2client.describe_load_balancers()
+            for lb in ELBList2['LoadBalancers']:
                 logging.info("DescribeLoadBalancerAttibute v2 API Call")
                 lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                logging.info("Parsing out for ELBv2 Access Logging")
                 for lbtemp in lblog['Attributes']:
-                    logging.info("Parsing out for Access Logging")
                     if lbtemp['Key'] == 'access_logs.s3.enabled':
                         if lbtemp['Value'] == 'false':
                             ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
