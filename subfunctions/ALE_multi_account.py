@@ -463,7 +463,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
     """Function to turn on Load Balancer Logs"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
-            logging.info("Turning on Load Balancer Logging on in AWS Account " + org_account + " in region " + aws_region + ".")
+            logging.info("Checking for Load Balancer Logging in the account "  + org_account + " in region " + aws_region + ".")
             sts = boto3.client('sts')
             RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
             logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
@@ -496,7 +496,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                 for lb in ELBList['LoadBalancerDescriptions']:
                     logging.info("DescribeLoadBalancerAttibute API Call")
                     lblog=elbv1_ma.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
-                    logging.info("Parsing out for Access Logging")
+                    logging.info("Parsing out for ELB Access Logging")
                     if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == False:
                         ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
                 logging.info("DescribeLoadBalancers v2 API Call")
@@ -505,7 +505,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                     logging.info("DescribeLoadBalancerAttibute v2 API Call")
                     lblog=elbv2_ma.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
                     for lbtemp in lblog['Attributes']:
-                        logging.info("Parsing out for Access Logging")
+                        logging.info("Parsing out for ELBv2 Access Logging")
                         if lbtemp['Key'] == 'access_logs.s3.enabled':
                             if lbtemp['Value'] == 'false':
                                 ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
