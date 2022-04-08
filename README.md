@@ -117,6 +117,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketLifecycleConfiguration"
 
 # NEW! For adding Elastic Load Balancing Access Logs:
+"elb:DescribeLoadBalancers",
 "elb:DescribeLoadBalancerAttributes",
 "elb:ModifyLoadBalancerAttributes",
 "elbv2:DescribeLoadBalancers",
