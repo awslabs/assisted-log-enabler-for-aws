@@ -486,6 +486,13 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
             aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
             region_name=aws_region
             )
+            s3_ma = boto3.client(
+            's3',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
             try:
                 ELBList1: list = []
                 ELBList2: list = []
@@ -521,11 +528,11 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                     logging.info("Creating bucket in %s" % org_account)
                     logging.info("CreateBucket API Call")
                     if aws_region == 'us-east-1':
-                        logging_bucket_dict = s3.create_bucket(
+                        logging_bucket_dict = s3_ma.create_bucket(
                             Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end
                         )
                     else:
-                        logging_bucket_dict = s3.create_bucket(
+                        logging_bucket_dict = s3_ma.create_bucket(
                             Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                             CreateBucketConfiguration={
                                 'LocationConstraint': aws_region
@@ -534,7 +541,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                     logging.info("Bucket " + "aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end + " Created.")
                     logging.info("Setting lifecycle policy.")
                     logging.info("PutBucketLifecycleConfiguration API Call")
-                    lifecycle_policy = s3.put_bucket_lifecycle_configuration(
+                    lifecycle_policy = s3_ma.put_bucket_lifecycle_configuration(
                         Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         LifecycleConfiguration={
                             'Rules': [
@@ -602,13 +609,13 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                         elb_account='507241528517'
                     logging.info("Checking for AWS Log Account for ELB.")
                     logging.info("PutBucketPolicy API Call")
-                    bucket_policy = s3.put_bucket_policy(
+                    bucket_policy = s3_ma.put_bucket_policy(
                         Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         Policy='{"Version": "2012-10-17", "Statement": [{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '"},{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Effect": "Allow","Principal": {"AWS": "arn:aws:iam::' + elb_account + ':root"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*"}]}'
                     )
                     logging.info("Setting the S3 bucket Public Access to Blocked")
                     logging.info("PutPublicAccessBlock API Call")
-                    bucket_private = s3.put_public_access_block(
+                    bucket_private = s3_ma.put_public_access_block(
                         Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         PublicAccessBlockConfiguration={
                             'BlockPublicAcls': True,
