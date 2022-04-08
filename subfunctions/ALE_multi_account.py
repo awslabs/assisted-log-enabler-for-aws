@@ -512,31 +512,30 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                                 ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
                 ELBLogList=ELBv1LogList+ELBv2LogList      
                 if ELBLogList != []:
-                    logging.info("List of Load Balancers found within account " + account_number + ", region " + aws_region + " without logging enabled:")
+                    logging.info("List of Load Balancers found within account " + org_account + ", region " + aws_region + " without logging enabled:")
                     print(ELBLogList)
                     for elb in ELBLogList:
                         logging.info(elb[0] + " does not have Load Balancer logging on. It will be turned on within this function.")
                     logging.info("Creating S3 Logging Bucket for Load Balancers")
                     """Function to create the bucket for storing load balancer logs"""
-                    account_number = sts.get_caller_identity()["Account"]
-                    logging.info("Creating bucket in %s" % account_number)
+                    logging.info("Creating bucket in %s" % org_account)
                     logging.info("CreateBucket API Call")
                     if aws_region == 'us-east-1':
                         logging_bucket_dict = s3.create_bucket(
-                            Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
+                            Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end
                         )
                     else:
                         logging_bucket_dict = s3.create_bucket(
-                            Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                            Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                             CreateBucketConfiguration={
                                 'LocationConstraint': aws_region
                             }
                         )
-                    logging.info("Bucket " + "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end + " Created.")
+                    logging.info("Bucket " + "aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end + " Created.")
                     logging.info("Setting lifecycle policy.")
                     logging.info("PutBucketLifecycleConfiguration API Call")
                     lifecycle_policy = s3.put_bucket_lifecycle_configuration(
-                        Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         LifecycleConfiguration={
                             'Rules': [
                                 {
@@ -604,13 +603,13 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                     logging.info("Checking for AWS Log Account for ELB.")
                     logging.info("PutBucketPolicy API Call")
                     bucket_policy = s3.put_bucket_policy(
-                        Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         Policy='{"Version": "2012-10-17", "Statement": [{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '"},{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Effect": "Allow","Principal": {"AWS": "arn:aws:iam::' + elb_account + ':root"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*"}]}'
                     )
                     logging.info("Setting the S3 bucket Public Access to Blocked")
                     logging.info("PutPublicAccessBlock API Call")
                     bucket_private = s3.put_public_access_block(
-                        Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        Bucket="aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                         PublicAccessBlockConfiguration={
                             'BlockPublicAcls': True,
                             'IgnorePublicAcls': True,
@@ -627,7 +626,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                                 LoadBalancerAttributes={
                                     'AccessLog': {
                                         'Enabled': True,
-                                        'S3BucketName': "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                                        'S3BucketName': "aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end,
                                         'EmitInterval': 5,
                                         'S3BucketPrefix': elb[0]
                                     }
@@ -647,7 +646,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                                     },
                                     {
                                         'Key': 'access_logs.s3.bucket',
-                                        'Value': "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
+                                        'Value': "aws-lb-log-collection-" + org_account + "-" + aws_region + "-" + unique_end
                                     },
                                     {
                                         'Key': 'access_logs.s3.prefix',
@@ -657,7 +656,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end):
                             )
                             logging.info("Logging Enabled for Load Balancer " + elb[0])
                 else: 
-                    logging.info("No Load Balancers WITHOUT logging found within account " + account_number + ", region " + aws_region + ":")
+                    logging.info("No Load Balancers WITHOUT logging found within account " + org_account + ", region " + aws_region + ":")
             except Exception as exception_handle:
                 logging.error(exception_handle)
 
