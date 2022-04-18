@@ -225,6 +225,82 @@ def s3_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 5. Remove the Load Balancer Logging Resources created by Assisted Log Enabler
+def lb_cleanup():
+    """Function to clean up Load Balancer Logs"""
+    logging.info("Cleaning up Load Balancer Logs created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        elbv1client = boto3.client('elb', region_name=aws_region)
+        elbv2client = boto3.client('elbv2', region_name=aws_region)
+        ELBList1: list = []
+        ELBList2: list = []
+        ELBv1LogList: list = []
+        ELBv2LogList: list = []
+        removal_list: list = []
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Cleaning up Bucket Logs created by Assisted Log Enabler for AWS in region " + aws_region + ".")
+            logging.info("DescribeLoadBalancers API Call")
+            ELBList1 = elbv1client.describe_load_balancers()
+            for lb in ELBList1['LoadBalancerDescriptions']:
+                logging.info("DescribeLoadBalancerAttibute API Call")
+                lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
+                logging.info("Parsing out for ELB Access Logging")
+                if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == True:
+                    if 'aws-lb-log-collection-' in str(lblog['LoadBalancerAttributes']['AccessLog']['S3BucketName']):
+                        ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
+            logging.info("DescribeLoadBalancers v2 API Call")
+            ELBList2 = elbv2client.describe_load_balancers()
+            for lb in ELBList2['LoadBalancers']:
+                logging.info("DescribeLoadBalancerAttibute v2 API Call")
+                lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                logging.info("Parsing out for ELBv2 Access Logging")
+                for lbtemp in lblog['Attributes']:
+                    if lbtemp['Key'] == 'access_logs.s3.enabled':
+                        if lbtemp['Value'] == 'true':
+                            for lbtemp2 in lblog['Attributes']:
+                                if lbtemp2['Key'] == 'access_logs.s3.bucket':
+                                    if 'aws-lb-log-collection-' in str(lbtemp2['Value']):
+                                        ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
+            removal_list=ELBv1LogList+ELBv2LogList   
+            if removal_list != []:
+                logging.info("List Load Balancers with Logging enabled by by Assisted Log Enabler for AWS in " + aws_region)
+                print(removal_list)
+                for elb in removal_list:
+                    logging.info(elb[0] + " has Load Balancer logging on. It will be turned on within this function.")
+                if ELBv1LogList != []:
+                    for elb in ELBv1LogList:
+                        logging.info("Removing logs for Load Balancer " + elb[0])
+                        logging.info("ModifyLoadBalancerAttributes API Call")
+                        remove_lb_log = elbv1client.modify_load_balancer_attributes(
+                            LoadBalancerName=elb[0],
+                            LoadBalancerAttributes={
+                                'AccessLog': {
+                                    'Enabled': False }
+                            }
+                        )
+                        logging.info("Logging Disabled for Load Balancer " + elb[0])
+                if ELBv2LogList != []:
+                    for elb in ELBv2LogList:
+                        logging.info("Removing logs for Load Balancer " + elb[0])
+                        logging.info("ModifyLoadBalancerAttributes v2 API Call")
+                        remove_lb_log = elbv2client.modify_load_balancer_attributes(
+                            LoadBalancerArn=elb[1],
+                            Attributes=[
+                                {
+                                    'Key': 'access_logs.s3.enabled',
+                                    'Value': 'false'
+                                }
+                            ]
+                        )
+                        logging.info("Logging Disabled for Load Balancer " + elb[0])
+                logging.info("Removed Load Balancers Logging created by Assisted Log Enabler for AWS.")
+                time.sleep(1)
+            else:
+                logging.info("There are no Load Balancers Logs set by Log Enabler in " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
     vpcflow_cleanup()
@@ -247,9 +323,18 @@ def run_s3_cleanup():
     s3_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_lb_cleanup():
+    """Function to run the lb_cleanup function"""
+    lb_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     r53_cleanup()
+    vpcflow_cleanup()
+    cloudtrail_cleanup()
+    s3_cleanup()
+    lb_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 
