@@ -171,7 +171,7 @@ def check_cloudtrail(account_number, unique_end):
         cloudtrail_activate = cloudtrail.create_trail(
             Name='assisted-log-enabler-ct-' + account_number,
             S3BucketName="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
-            S3KeyPrefix='cloudtrail',
+            #S3KeyPrefix='cloudtrail',
             IsMultiRegionTrail=True,
             EnableLogFileValidation=True
             )
