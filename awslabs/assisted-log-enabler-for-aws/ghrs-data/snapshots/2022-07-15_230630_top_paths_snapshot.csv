@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,56,30
+/awslabs/assisted-log-enabler-for-aws/actions,10,1
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,6,3
+/awslabs/assisted-log-enabler-for-aws/tree/reinforce-2022,6,3
+/awslabs/assisted-log-enabler-for-aws/blob/main/.github/workflows/github-repo-stats.yml,6,2
+/awslabs/assisted-log-enabler-for-aws/branches,6,2
+/awslabs/assisted-log-enabler-for-aws/tree/main/.github/workflows,6,2
+/awslabs/assisted-log-enabler-for-aws/blob/reinforce-2022/subfunctions/ALE_single_account.py,6,1
+/awslabs/assisted-log-enabler-for-aws/actions/workflows/github-repo-stats.yml,5,1
+/awslabs/assisted-log-enabler-for-aws/pulls,3,2
