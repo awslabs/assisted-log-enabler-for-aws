@@ -19,6 +19,8 @@ from subfunctions import ALE_cleanup_single
 from subfunctions import ALE_dryrun_single
 from subfunctions import ALE_dryrun_multi
 
+import sys,subprocess
+subprocess.check_call([sys.executable, '-m', 'pip', 'install','coloredlogs'])
 
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
