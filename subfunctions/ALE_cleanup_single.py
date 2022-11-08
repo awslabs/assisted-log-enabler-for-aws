@@ -13,9 +13,6 @@ import datetime
 from botocore.exceptions import ClientError
 from datetime import timezone
 
-import coloredlogs
-coloredlogs.install()
-
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
 timestamp_date = datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d-%H%M%S")
