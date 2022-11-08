@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,78,50
+/awslabs/assisted-log-enabler-for-aws/releases/tag/v1.6.0,6,1
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,4,3
+/awslabs/assisted-log-enabler-for-aws/blob/main/assisted_log_enabler.py,2,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml,2,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_single_account.py,2,2
+/awslabs/assisted-log-enabler-for-aws/pulls,2,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/LICENSE,1,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_dryrun_single.py,1,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/THIRD-PARTY,1,1
