@@ -1,0 +1,10 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,108,85
+/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml,3,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/diagrams/assisted_log_enabler.png,1,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_cleanup_single.py,1,1
+/awslabs/assisted-log-enabler-for-aws/compare/main...github-repo-stats,1,1
+/awslabs/assisted-log-enabler-for-aws/pulls,1,1
+/awslabs/assisted-log-enabler-for-aws/tree/github-repo-stats,1,1
+/awslabs/assisted-log-enabler-for-aws/tree/main/diagrams,1,1
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,1,1
