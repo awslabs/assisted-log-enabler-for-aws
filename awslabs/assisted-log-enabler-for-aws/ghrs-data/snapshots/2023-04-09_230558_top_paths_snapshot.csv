@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,103,72
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,10,5
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_single_account.py,9,3
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_multi_account.py,6,3
+/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml,4,1
+/awslabs/assisted-log-enabler-for-aws/tree/main/permissions,3,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/assisted_log_enabler.py,2,2
+/awslabs/assisted-log-enabler-for-aws/search,2,1
+/awslabs/assisted-log-enabler-for-aws/blob/bb8cc72b50a8559c50959ae70182e85ddf91ffb8/subfunctions/ALE_single_account.py,1,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/README.md,1,1
