@@ -1,0 +1,4 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,41,34
+/awslabs/assisted-log-enabler-for-aws/blob/2b3842075a3b8d8e08579b772ffd0b1ebcb8e214/subfunctions/ALE_single_account.py,2,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_permissions_example_multi_account.json,1,1
