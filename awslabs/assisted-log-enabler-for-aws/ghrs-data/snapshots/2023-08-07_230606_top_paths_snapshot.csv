@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,80,56
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_single_account.py,23,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/assisted_log_enabler.py,13,5
+/awslabs/assisted-log-enabler-for-aws/tree/main,12,3
+/awslabs/assisted-log-enabler-for-aws/tree/main/diagrams,5,2
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,5,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_multi_account.py,4,1
+/awslabs/assisted-log-enabler-for-aws/blob/main/diagrams/assisted_log_enabler.png,2,1
+/awslabs/assisted-log-enabler-for-aws/projects,1,1
+/awslabs/assisted-log-enabler-for-aws/pulls,1,1
