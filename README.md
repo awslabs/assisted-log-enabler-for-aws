@@ -194,12 +194,13 @@ No valid option selected. Please run with -h to display valid options.
 * Options
 ```
 python3 assisted_log_enabler.py -h
-usage: assisted_log_enabler.py [-h] [--mode MODE] [--all] [--eks] [--vpcflow]
-                               [--r53querylogs] [--s3logs] [--lblogs] [--cloudtrail]
+usage: assisted_log_enabler.py [-h] [--mode MODE] [--bucket BUCKET] [--all]
+                               [--eks] [--vpcflow] [--r53querylogs] [--s3logs]
+                               [--lblogs] [--cloudtrail]
                                [--single_r53querylogs] [--single_cloudtrail]
                                [--single_vpcflow] [--single_all]
-                               [--single_s3logs] [--single_lblogs] [--single_account]
-                               [--multi_account]
+                               [--single_s3logs] [--single_lblogs]
+                               [--single_account] [--multi_account]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
 
@@ -211,6 +212,11 @@ optional arguments:
                         multi_account, You must have the associated
                         CloudFormation template deployed as a StackSet. See
                         the README file for more details.
+  --bucket BUCKET       Specify an S3 bucket name that you want Assisted Log
+                        Enabler to store logs in. Otherwise, a new S3 bucket
+                        will be created (default). Only used for Amazon VPC
+                        Flow Logs, Amazon Route 53 Resolver Query Logs, and
+                        AWS CloudTrail logs.
 
 Single & Multi Account Options:
   Use these flags to choose which services you want to turn logging on for.
@@ -221,8 +227,9 @@ Single & Multi Account Options:
   --vpcflow             Turns on Amazon VPC Flow Logs.
   --r53querylogs        Turns on Amazon Route 53 Resolver Query Logs.
   --s3logs              Turns on Amazon Bucket Logs.
-  --lblogs              Turns on Elastic Load Balancing Logs.
-  --cloudtrail          Turns on AWS CloudTrail.
+  --lblogs              Turns on Amazon Load Balancer Logs.
+  --cloudtrail          Turns on AWS CloudTrail. Only available in Single
+                        Account version.
 
 Cleanup Options:
   Use these flags to choose which resources you want to turn logging off
@@ -239,7 +246,7 @@ Cleanup Options:
                         Enabler for AWS.
   --single_s3logs       Removes Amazon Bucket Log resources created by
                         Assisted Log Enabler for AWS.
-  --single_lblogs       Removes Elastic Load Balancing Log resources created by
+  --single_lblogs       Removes Amazon Load Balancer Log resources created by
                         Assisted Log Enabler for AWS.
 
 Dry Run Options:

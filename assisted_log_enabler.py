@@ -75,7 +75,8 @@ def assisted_log_enabler():
 
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
     parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account, cleanup, dryrun. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
-    
+    parser.add_argument('--bucket',help=' Specify an S3 bucket name that you want Assisted Log Enabler to store logs in. Otherwise, a new S3 bucket will be created (default). Only used for Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, and AWS CloudTrail logs.')
+
     function_parser_group = parser.add_argument_group('Single & Multi Account Options', 'Use these flags to choose which services you want to turn logging on for.')
     function_parser_group.add_argument('--all', action='store_true', help=' Turns on all of the log types within the Assisted Log Enabler for AWS.')
     function_parser_group.add_argument('--eks', action='store_true', help=' Turns on Amazon EKS audit & authenticator logs.')
@@ -102,21 +103,24 @@ def assisted_log_enabler():
 
     event = 'event'
     context = 'context'
+    bucket_name = 'default'
     if args.mode == 'single_account':
+        if args.bucket:
+            bucket_name = args.bucket
         if args.eks:
             ALE_single_account.run_eks()
         elif args.vpcflow:
-            ALE_single_account.run_vpc_flow_logs()
+            ALE_single_account.run_vpc_flow_logs(bucket_name)
         elif args.r53querylogs:
-            ALE_single_account.run_r53_query_logs()
+            ALE_single_account.run_r53_query_logs(bucket_name)
         elif args.s3logs:
             ALE_single_account.run_s3_logs()
         elif args.lblogs:
             ALE_single_account.run_lb_logs()
         elif args.cloudtrail:
-            ALE_single_account.run_cloudtrail()
+            ALE_single_account.run_cloudtrail(bucket_name)
         elif args.all:
-            ALE_single_account.lambda_handler(event, context)
+            ALE_single_account.lambda_handler(event, context, bucket_name)
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'multi_account':
