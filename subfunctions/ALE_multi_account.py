@@ -32,7 +32,6 @@ region = os.environ['AWS_REGION']
 
 region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
-
 # 0. Define random string for S3 Bucket Name
 def random_string_generator():
     lower_letters = string.ascii_lowercase
@@ -73,13 +72,14 @@ def create_bucket(organization_id, account_number, unique_end):
     try:
         logging.info("Creating bucket in %s" % account_number)
         logging.info("CreateBucket API Call")
+        bucket_name = "aws-log-collection-" + account_number + "-" + region + "-" + unique_end
         if region == 'us-east-1':
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end
+                Bucket=bucket_name
             )
         else:
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+                Bucket=bucket_name,
                 CreateBucketConfiguration={
                     'LocationConstraint': region
                 }
@@ -87,7 +87,7 @@ def create_bucket(organization_id, account_number, unique_end):
         logging.info("Bucket Created.")
         logging.info("Setting lifecycle policy.")
         lifecycle_policy = s3.put_bucket_lifecycle_configuration(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             LifecycleConfiguration={
                 'Rules': [
                     {
@@ -109,22 +109,22 @@ def create_bucket(organization_id, account_number, unique_end):
         )
         logging.info("Lifecycle Policy successfully set.")
         create_ct_path = s3.put_object(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             Key='cloudtrail/AWSLogs/' + account_number + '/')
         create_ct_path_vpc = s3.put_object(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             Key='vpcflowlogs/')
         create_ct_path_r53 = s3.put_object(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             Key='r53querylogs/')
         bucket_policy = s3.put_bucket_policy(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Bucket=bucket_name,
+            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
         )
         logging.info("Setting the S3 bucket Public Access to Blocked")
         logging.info("PutPublicAccessBlock API Call")
         bucket_private = s3.put_public_access_block(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             PublicAccessBlockConfiguration={
                 'BlockPublicAcls': True,
                 'IgnorePublicAcls': True,
@@ -134,11 +134,19 @@ def create_bucket(organization_id, account_number, unique_end):
         )
     except Exception as exception_handle:
         logging.error(exception_handle)
-    return account_number
+    return bucket_name
+
+# If custom bucket is supplied, update the bucket policy
+def update_custom_bucket_policy(bucket_name, account_number):
+    s3.put_bucket_policy(
+            Bucket=bucket_name,
+            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+        )
+
 
 
 # 4. Find VPCs and turn flow logs on if not on already.
-def flow_log_activator(account_number, OrgAccountIdList, region_list, unique_end):
+def flow_log_activator(OrgAccountIdList, region_list, bucket_name):
     """Function to define the list of VPCs without logging turned on"""
     logging.info("Creating a list of VPCs without Flow Logs on.")
     for org_account in OrgAccountIdList:
@@ -185,8 +193,19 @@ def flow_log_activator(account_number, OrgAccountIdList, region_list, unique_end
                     ResourceType='VPC',
                     TrafficType='ALL',
                     LogDestinationType='s3',
-                    LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/vpcflowlogs',
-                    LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}'
+                    LogDestination='arn:aws:s3:::' + bucket_name + '/vpcflowlogs',
+                    LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}',
+                    TagSpecifications=[
+                        {
+                            'ResourceType': 'vpc-flow-log',
+                            'Tags': [
+                                {
+                                    'Key': 'workflow',
+                                    'Value': 'assisted-log-enabler'
+                                },
+                            ]
+                        }
+                    ]
                 )
                 logging.info("VPC Flow Logs are turned on for account " + org_account + ".")
             except Exception as exception_handle:
@@ -254,7 +273,7 @@ def eks_logging(region_list, OrgAccountIdList):
 
 
 # 6. Turn on Route 53 Query Logging.
-def route_53_query_logs(region_list, account_number, OrgAccountIdList, unique_end):
+def route_53_query_logs(region_list, OrgAccountIdList, bucket_name):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for org_account in OrgAccountIdList:
         for aws_region in region_list:
@@ -303,7 +322,7 @@ def route_53_query_logs(region_list, account_number, OrgAccountIdList, unique_en
                 logging.info("CreateResolverQueryLogConfig API Call")
                 create_query_log = route53resolver_ma.create_resolver_query_log_config(
                     Name='Assisted_Log_Enabler_Query_Logs_' + aws_region,
-                    DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/r53querylogs',
+                    DestinationArn='arn:aws:s3:::' + bucket_name + '/r53querylogs',
                     CreatorRequestId=timestamp_date_string,
                     Tags=[
                         {
@@ -675,23 +694,31 @@ def run_eks():
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
-def run_vpc_flow_logs():
+def run_vpc_flow_logs(bucket_name='default'):
     """Function that runs the defined VPC Flow Log logging code"""
-    unique_end = random_string_generator()
-    account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
-    create_bucket(organization_id, account_number, unique_end)
-    flow_log_activator(account_number, OrgAccountIdList, region_list, unique_end)
+    account_number = get_account_number()
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(organization_id, account_number, unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    
+    flow_log_activator(OrgAccountIdList, region_list, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
     
 
-def run_r53_query_logs():
+def run_r53_query_logs(bucket_name='default'):
     """Function that runs the defined R53 Query Logging code"""
-    unique_end = random_string_generator()
-    account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
-    create_bucket(organization_id, account_number, unique_end)
-    route_53_query_logs(region_list, account_number, OrgAccountIdList, unique_end)
+    account_number = get_account_number()
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(organization_id, account_number, unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    
+    route_53_query_logs(region_list, OrgAccountIdList, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_s3_logs():
@@ -710,15 +737,18 @@ def run_lb_logs():
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def lambda_handler(event, context):
+def lambda_handler(event, context, bucket_name='default'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
     account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
-    create_bucket(organization_id, account_number, unique_end)
-    flow_log_activator(account_number, OrgAccountIdList, region_list, unique_end)
+    if bucket_name == 'default':
+        bucket_name = create_bucket(organization_id, account_number, unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    flow_log_activator(OrgAccountIdList, region_list, bucket_name)
     eks_logging(region_list, OrgAccountIdList)
-    route_53_query_logs(region_list, account_number, OrgAccountIdList, unique_end)
+    route_53_query_logs(region_list, OrgAccountIdList, bucket_name)
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end)
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")

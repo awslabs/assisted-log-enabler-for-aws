@@ -50,6 +50,7 @@ Resources:
               - route53resolver:ListResolverQueryLogConfigAssociations
               - route53resolver:CreateResolverQueryLogConfig
               - route53resolver:AssociateResolverQueryLogConfig
+              - route53resolver:TagResource
               - s3:PutBucketLogging
               - s3:GetBucketLogging
               - s3:ListBucket
@@ -69,6 +70,7 @@ Resources:
               - elasticloadbalancing:DescribeLoadBalancerAttributes
               - elasticloadbalancing:ModifyLoadBalancerAttributes
               - eks:ListClusters
+              - ec2:CreateTags
             Resource: '*'
             Condition:
               StringEquals:
