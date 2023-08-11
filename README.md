@@ -198,7 +198,9 @@ No valid option selected. Please run with -h to display valid options.
 * Options
 ```
 python3 assisted_log_enabler.py -h
-usage: assisted_log_enabler.py [-h] [--mode MODE] [--bucket BUCKET] [--all]
+usage: assisted_log_enabler.py [-h] [--mode MODE] [--bucket BUCKET]
+                               [--include_accounts ACCOUNT_NUMBERS]
+                               [--exclude_accounts ACCOUNT_NUMBERS] [--all]
                                [--eks] [--vpcflow] [--r53querylogs] [--s3logs]
                                [--lblogs] [--cloudtrail]
                                [--single_r53querylogs] [--single_cloudtrail]
@@ -216,13 +218,20 @@ optional arguments:
                         multi_account, You must have the associated
                         CloudFormation template deployed as a StackSet. See
                         the README file for more details.
-  --bucket BUCKET       Specify an S3 bucket name that you want Assisted Log
-                        Enabler to store logs in. Otherwise, a new S3 bucket
-                        will be created (default). Only used for Amazon VPC
-                        Flow Logs, Amazon Route 53 Resolver Query Logs, and
-                        AWS CloudTrail logs. WARNING: For multi_account, this
-                        will replace the bucket policy. For single_account,
-                        this may add statements to the bucket policy.
+  --bucket BUCKET       Specify the name of a pre-existing S3 bucket that you
+                        want Assisted Log Enabler to store logs in. Otherwise,
+                        a new S3 bucket will be created (default). Only used
+                        for Amazon VPC Flow Logs, Amazon Route 53 Resolver
+                        Query Logs, and AWS CloudTrail logs. WARNING: For
+                        multi_account, this will replace the bucket policy.
+                        For single_account, this may add statements to the
+                        bucket policy.
+  --include_accounts ACCOUNT_NUMBERS
+                        Specify a comma separated list of AWS account numbers
+                        to INCLUDE for multi_account mode.
+  --exclude_accounts ACCOUNT_NUMBERS
+                        Specify a comma separated list of AWS account numbers
+                        to EXCLUDE for multi_account mode.
 
 Single & Multi Account Options:
   Use these flags to choose which services you want to turn logging on for.
