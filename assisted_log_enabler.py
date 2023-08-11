@@ -8,6 +8,7 @@ import os
 import json
 import boto3
 import time
+import sys
 import datetime
 import argparse
 from botocore.exceptions import ClientError
@@ -75,7 +76,9 @@ def assisted_log_enabler():
 
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
     parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account, cleanup, dryrun. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
-    parser.add_argument('--bucket',help=' Specify an S3 bucket name that you want Assisted Log Enabler to store logs in. Otherwise, a new S3 bucket will be created (default). Only used for Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, and AWS CloudTrail logs. WARNING: For multi_account, this will replace the bucket policy. For single_account, this may add statements to the bucket policy.')
+    parser.add_argument('--bucket',help=' Specify the name of a pre-existing S3 bucket that you want Assisted Log Enabler to store logs in. Otherwise, a new S3 bucket will be created (default). Only used for Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, and AWS CloudTrail logs. WARNING: For multi_account, this will replace the bucket policy. For single_account, this may add statements to the bucket policy.')
+    parser.add_argument('--include_accounts',help=' Specify AWS accounts to include for multi_account mode.')
+    parser.add_argument('--exclude_accounts',help=' Specify AWS accounts to exclude for multi_account mode.')
 
     function_parser_group = parser.add_argument_group('Single & Multi Account Options', 'Use these flags to choose which services you want to turn logging on for.')
     function_parser_group.add_argument('--all', action='store_true', help=' Turns on all of the log types within the Assisted Log Enabler for AWS.')
@@ -104,6 +107,8 @@ def assisted_log_enabler():
     event = 'event'
     context = 'context'
     bucket_name = 'default'
+    included_accounts = 'all'
+    excluded_accounts = 'none'
     if args.mode == 'single_account':
         if args.bucket:
             bucket_name = args.bucket
@@ -124,20 +129,37 @@ def assisted_log_enabler():
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'multi_account':
+        if args.include_accounts:
+            included_accounts_list = args.include_accounts.strip().split(",")
+            if all(len(a) == 12 for a in included_accounts_list):
+                logging.info("Account numbers to be included: ")
+                print(*included_accounts_list, sep=",")
+                included_accounts = included_accounts_list
+            else:
+                print("An invalid account number specified for --include_accounts. Account numbers are 12 digits long.")
+        if args.exclude_accounts:
+            excluded_accounts_list = args.exclude_accounts.strip().split(",")
+            if all(len(a) == 12 for a in excluded_accounts_list):
+                logging.info("Account numbers to be excluded: ")
+                print(*excluded_accounts_list, sep=",")
+                excluded_accounts = excluded_accounts_list
+            else:
+                sys.exit("An invalid account number was specified for --exclude_accounts. Account numbers are 12 digits long.")
+
         if args.bucket:
             bucket_name = args.bucket
         if args.eks:
-            ALE_multi_account.run_eks()
+            ALE_multi_account.run_eks(included_accounts, excluded_accounts)
         elif args.vpcflow:
-            ALE_multi_account.run_vpc_flow_logs(bucket_name)
+            ALE_multi_account.run_vpc_flow_logs(bucket_name, included_accounts, excluded_accounts)
         elif args.r53querylogs:
-            ALE_multi_account.run_r53_query_logs(bucket_name)
+            ALE_multi_account.run_r53_query_logs(bucket_name, included_accounts, excluded_accounts)
         elif args.s3logs:
-            ALE_multi_account.run_s3_logs()
+            ALE_multi_account.run_s3_logs(included_accounts, excluded_accounts)
         elif args.lblogs:
-            ALE_multi_account.run_lb_logs()
+            ALE_multi_account.run_lb_logs(included_accounts, excluded_accounts)
         elif args.all:
-            ALE_multi_account.lambda_handler(event, context, bucket_name)
+            ALE_multi_account.lambda_handler(event, context, bucket_name, included_accounts, excluded_accounts)
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'cleanup':
