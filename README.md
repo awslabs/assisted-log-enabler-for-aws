@@ -220,7 +220,9 @@ optional arguments:
                         Enabler to store logs in. Otherwise, a new S3 bucket
                         will be created (default). Only used for Amazon VPC
                         Flow Logs, Amazon Route 53 Resolver Query Logs, and
-                        AWS CloudTrail logs.
+                        AWS CloudTrail logs. WARNING: For multi_account, this
+                        will replace the bucket policy. For single_account,
+                        this may add statements to the bucket policy.
 
 Single & Multi Account Options:
   Use these flags to choose which services you want to turn logging on for.
