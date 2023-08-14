@@ -29,7 +29,6 @@ region = os.environ['AWS_REGION']
 
 region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
-
 # 0. Define random string for S3 Bucket Name
 def random_string_generator():
     lower_letters = string.ascii_lowercase
@@ -636,6 +635,42 @@ def lb_logs(region_list, unique_end):
             logging.error(exception_handle)
 
 
+def check_guardduty():
+    """Function to turn on GuardDuty"""
+    account_number = sts.get_caller_identity()["Account"]
+    for aws_region in region_list:
+        guardduty = boto3.client('guardduty', region_name=aws_region)
+        logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
+        try:
+            logging.info("ListDetectors API Call")
+            detectors = guardduty.list_detectors()
+            if detectors["DetectorIds"] == []:
+                logging.info("GuardDuty is not enabled in the account" + account_number + ", region " + aws_region)
+                logging.info("Enabling GuardDuty")
+                logging.info("CreateDetector API Call")
+                new_detector = guardduty.create_detector(
+                    Enable=True, 
+                    DataSources={
+                        'S3Logs': {
+                            'Enable': True
+                        },
+                        'Kubernetes': {
+                            'AuditLogs': {
+                                'Enable': True
+                            }
+                        }
+                    },
+                    Tags={
+                        'workflow': 'assisted-log-enabler'
+                    }
+                    )
+                logging.info("Created GuardDuty detector ID " + new_detector["DetectorId"])
+            else:
+                logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+
 def run_eks():
     """Function that runs the defined EKS logging code"""
     eks_logging(region_list)
@@ -685,6 +720,11 @@ def run_lb_logs():
     lb_logs(region_list, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_guardduty():
+    """Function that runs the defined GuardDuty enablement code"""
+    check_guardduty()
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
 def lambda_handler(event, context, bucket_name='default'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
@@ -699,6 +739,7 @@ def lambda_handler(event, context, bucket_name='default'):
     route_53_query_logs(region_list, account_number, bucket_name)
     s3_logs(region_list, unique_end)
     lb_logs(region_list, unique_end)
+    check_guardduty()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
