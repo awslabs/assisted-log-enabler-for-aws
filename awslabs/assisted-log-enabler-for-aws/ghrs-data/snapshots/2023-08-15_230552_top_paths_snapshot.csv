@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,130,59
+/awslabs/assisted-log-enabler-for-aws/blob/main/subfunctions/ALE_single_account.py,37,1
+/awslabs/assisted-log-enabler-for-aws/pull/45,26,4
+/awslabs/assisted-log-enabler-for-aws/pulls,20,3
+/awslabs/assisted-log-enabler-for-aws/tree/main,19,4
+/awslabs/assisted-log-enabler-for-aws/tree/main/subfunctions,15,2
+/awslabs/assisted-log-enabler-for-aws/issues,13,2
+/awslabs/assisted-log-enabler-for-aws/blob/main/assisted_log_enabler.py,11,4
+/awslabs/assisted-log-enabler-for-aws/issues/37,11,2
+/awslabs/assisted-log-enabler-for-aws/compare/main...ayankowsky:assisted-log-enabler-for-aws:bucket-option-multi-account,11,1
