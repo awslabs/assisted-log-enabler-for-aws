@@ -202,11 +202,12 @@ usage: assisted_log_enabler.py [-h] [--mode MODE] [--bucket BUCKET]
                                [--include_accounts ACCOUNT_NUMBERS]
                                [--exclude_accounts ACCOUNT_NUMBERS] [--all]
                                [--eks] [--vpcflow] [--r53querylogs] [--s3logs]
-                               [--lblogs] [--cloudtrail]
+                               [--lblogs] [--cloudtrail] [--guardduty]
                                [--single_r53querylogs] [--single_cloudtrail]
                                [--single_vpcflow] [--single_all]
                                [--single_s3logs] [--single_lblogs]
-                               [--single_account] [--multi_account]
+                               [--single_guardduty] [--single_account]
+                               [--multi_account]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
 
@@ -245,6 +246,7 @@ Single & Multi Account Options:
   --lblogs              Turns on Amazon Load Balancer Logs.
   --cloudtrail          Turns on AWS CloudTrail. Only available in Single
                         Account version.
+  --guardduty           Turns on Amazon GuardDuty.
 
 Cleanup Options:
   Use these flags to choose which resources you want to turn logging off
@@ -263,6 +265,8 @@ Cleanup Options:
                         Assisted Log Enabler for AWS.
   --single_lblogs       Removes Amazon Load Balancer Log resources created by
                         Assisted Log Enabler for AWS.
+  --single_guardduty    Removes GuardDuty detectors created by Assisted Log
+                        Enabler for AWS.
 
 Dry Run Options:
   Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.
