@@ -70,8 +70,6 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketPublicAccessBlock",
 "s3:PutBucketLifecycleConfiguration"
 "guardduty:ListDetectors"
-"guardduty:ListInvitations"
-"guardduty:AcceptAdministratorInvitation"
 "guardduty:TagResource"
 "guardduty:CreateDetector"
 
@@ -138,8 +136,6 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 
 # For enabling GuardDuty:
 "guardduty:ListDetectors"
-"guardduty:ListInvitations"
-"guardduty:AcceptAdministratorInvitation"
 "guardduty:TagResource"
 "guardduty:CreateDetector"
 
