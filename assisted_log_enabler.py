@@ -162,6 +162,8 @@ def assisted_log_enabler():
             ALE_multi_account.run_s3_logs(included_accounts, excluded_accounts)
         elif args.lblogs:
             ALE_multi_account.run_lb_logs(included_accounts, excluded_accounts)
+        elif args.guardduty:
+            ALE_multi_account.run_guardduty(included_accounts, excluded_accounts)
         elif args.all:
             ALE_multi_account.lambda_handler(event, context, bucket_name, included_accounts, excluded_accounts)
         else:

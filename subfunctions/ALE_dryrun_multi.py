@@ -305,6 +305,36 @@ def dryrun_lb_logs(region_list, account_number, OrgAccountIdList):
             except Exception as exception_handle:
                 logging.error(exception_handle)
 
+def dryrun_check_guardduty(region_list, OrgAccountIdList):
+    """Function to check if GuardDuty is enabled"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Checking for GuardDuty detectors in the account "  + org_account + " in region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            guardduty_ma = boto3.client(
+            'guardduty',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                logging.info("ListDetectors API Call")
+                detectors = guardduty_ma.list_detectors()
+                if detectors["DetectorIds"] == []:
+                    logging.info("GuardDuty is not enabled in the account " + org_account + ", region " + aws_region)
+                else:
+                    logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
@@ -315,6 +345,7 @@ def lambda_handler(event, context):
     dryrun_route_53_query_logs(region_list, account_number, OrgAccountIdList)
     dryrun_s3_logs(region_list, account_number, OrgAccountIdList)
     dryrun_lb_logs(region_list, account_number, OrgAccountIdList)
+    dryrun_check_guardduty(region_list, OrgAccountIdList)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

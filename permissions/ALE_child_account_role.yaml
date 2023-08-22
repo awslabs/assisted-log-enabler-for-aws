@@ -71,6 +71,11 @@ Resources:
               - elasticloadbalancing:ModifyLoadBalancerAttributes
               - eks:ListClusters
               - ec2:CreateTags
+              - guardduty:ListDetectors
+              - guardduty:ListInvitations
+              - guardduty:AcceptAdministratorInvitation
+              - guardduty:TagResource
+              - guardduty:CreateDetector
             Resource: '*'
             Condition:
               StringEquals:

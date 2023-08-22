@@ -205,6 +205,21 @@ def dryrun_lb_logs(region_list, account_number):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def dryrun_check_guardduty(region_list, account_number):
+    """Function to check if GuardDuty is enabled"""
+    for aws_region in region_list:
+        guardduty = boto3.client('guardduty', region_name=aws_region)
+        logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
+        try:
+            logging.info("ListDetectors API Call")
+            detectors = guardduty.list_detectors()
+            if detectors["DetectorIds"] == []:
+                logging.info("GuardDuty is not enabled in the account" + account_number + ", region " + aws_region)
+            else:
+                logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     dryrun_flow_log_activator(region_list, account_number)
@@ -213,6 +228,7 @@ def lambda_handler(event, context):
     dryrun_route_53_query_logs(region_list, account_number)
     dryrun_s3_logs(region_list, account_number)
     dryrun_lb_logs(region_list, account_number)
+    dryrun_check_guardduty(region_list, account_number)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

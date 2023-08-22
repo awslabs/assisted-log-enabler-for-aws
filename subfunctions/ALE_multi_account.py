@@ -701,6 +701,59 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
+def check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts):
+    """Function to turn on GuardDuty"""
+    for org_account in OrgAccountIdList:
+        if excluded_accounts != 'none' and org_account in excluded_accounts:
+            continue
+        elif included_accounts == 'all' or org_account in included_accounts:
+            for aws_region in region_list:
+                logging.info("Checking for GuardDuty detectors in the account "  + org_account + " in region " + aws_region + ".")
+                sts = boto3.client('sts')
+                RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+                logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+                assisted_log_enabler_sts = sts.assume_role(
+                    RoleArn=RoleArn,
+                    RoleSessionName='assisted-log-enabler-activation',
+                    DurationSeconds=3600,
+                )
+                guardduty_ma = boto3.client(
+                'guardduty',
+                aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+                aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+                region_name=aws_region
+                )
+                try:
+                    logging.info("ListDetectors API Call")
+                    detectors = guardduty_ma.list_detectors()
+                    if detectors["DetectorIds"] == []:
+                        logging.info("GuardDuty is not enabled in the account " + org_account + ", region " + aws_region)
+                        logging.info("Enabling GuardDuty")
+                        logging.info("CreateDetector API Call")
+                        new_detector = guardduty_ma.create_detector(
+                            Enable=True, 
+                            DataSources={
+                                'S3Logs': {
+                                    'Enable': True
+                                },
+                                'Kubernetes': {
+                                    'AuditLogs': {
+                                        'Enable': True
+                                    }
+                                }
+                            },
+                            Tags={
+                                'workflow': 'assisted-log-enabler'
+                            }
+                            )
+                        logging.info("Created GuardDuty detector ID " + new_detector["DetectorId"])
+                    else:
+                        logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
+                except Exception as exception_handle:
+                    logging.error(exception_handle)
+
+
 
 def run_eks(included_accounts='all', excluded_accounts='none'):
     """Function that runs the defined EKS logging code"""
@@ -752,6 +805,12 @@ def run_lb_logs(included_accounts='all', excluded_accounts='none'):
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_guardduty(included_accounts='all', excluded_accounts='none'):
+    """Function that runs the defined GuardDuty enablement code"""
+    OrgAccountIdList, organization_id = org_account_grab()
+    check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
 def lambda_handler(event, context, bucket_name='default', included_accounts='all', excluded_accounts='none'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
@@ -766,6 +825,7 @@ def lambda_handler(event, context, bucket_name='default', included_accounts='all
     route_53_query_logs(region_list, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
+    check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

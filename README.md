@@ -69,6 +69,11 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketAcl",
 "s3:PutBucketPublicAccessBlock",
 "s3:PutBucketLifecycleConfiguration"
+"guardduty:ListDetectors"
+"guardduty:ListInvitations"
+"guardduty:AcceptAdministratorInvitation"
+"guardduty:TagResource"
+"guardduty:CreateDetector"
 
 # For adding AWS CloudTrail logs:
 "s3:GetBucketPolicy",
@@ -130,6 +135,13 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "elasticloadbalancing:DescribeLoadBalancers",
 "elasticloadbalancing:DescribeLoadBalancerAttributes",
 "elasticloadbalancing:ModifyLoadBalancerAttributes"
+
+# For enabling GuardDuty:
+"guardduty:ListDetectors"
+"guardduty:ListInvitations"
+"guardduty:AcceptAdministratorInvitation"
+"guardduty:TagResource"
+"guardduty:CreateDetector"
 
 # For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
 "route53resolver:ListResolverQueryLogConfigs",
@@ -307,6 +319,8 @@ python3 assisted_log_enabler.py --mode single_account --cloudtrail
 python3 assisted_log_enabler.py --mode single_account --s3logs
 # NEW! For Elastic Load Balancing Access Logs:
 python3 assisted_log_enabler.py --mode single_account --lblogs
+# NEW! For GuardDuty:
+python3 assisted_log_enabler.py --mode single_account --guardduty
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
@@ -368,6 +382,8 @@ For Amazon S3 Server Access Logs:
 python3 assisted_log_enabler.py --mode multi_account --s3logs
 # NEW! For Elastic Load Balancing Access Logs:
 python3 assisted_log_enabler.py --mode multi_account --lblogs
+# NEW! For GuardDuty:
+python3 assisted_log_enabler.py --mode multi_account --guardduty
 
 ```
 
