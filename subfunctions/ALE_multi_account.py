@@ -753,7 +753,144 @@ def check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_a
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
+def wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts):
+    """Function to turn on WAFv2 Logging"""
+    bucket_arn = ""
+    account_number = get_account_number()
+    
+    # Check Web ACLs in every account for logging and enable it if not already enabled
+    for org_account in OrgAccountIdList:
+        if excluded_accounts != 'none' and org_account in excluded_accounts:
+            continue
+        elif included_accounts == 'all' or org_account in included_accounts:
+            for aws_region in region_list:
+                logging.info("Checking for WAF Logging in the account "  + org_account + ", region " + aws_region + ".")
+                sts = boto3.client('sts')
+                RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+                logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+                assisted_log_enabler_sts = sts.assume_role(
+                    RoleArn=RoleArn,
+                    RoleSessionName='assisted-log-enabler-activation',
+                    DurationSeconds=3600,
+                )
+                wafv2_ma = boto3.client(
+                'wafv2',
+                aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+                aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+                region_name=aws_region
+                )
 
+                try:
+                    WAFv2List: list = [] # list of all WAFv2 ARNs
+                    WAFv2LogList: list = [] # list of WAFv2 ARNs with logging enabled
+                    WAFv2NoLogList: list = [] # list of WAFv2 ARNs to enable logging
+
+                    # Get regional WAFv2 Web ACLs
+                    logging.info("ListWebAcls API Call")
+                    wafv2_regional_acl_list = wafv2_ma.list_web_acls(Scope='REGIONAL')["WebACLs"]
+                    for acl in wafv2_regional_acl_list:
+                        WAFv2List.append(acl["ARN"])
+                    
+                    if aws_region == 'us-east-1':
+                        # Get CloudFront (global) WAFv2 Web ACLs
+                        logging.info("Checking for Global (CloudFront) Web ACLs")
+                        logging.info("ListWebAcls API Call")
+                        wafv2_cf_acl_list = wafv2_ma.list_web_acls(Scope='CLOUDFRONT')["WebACLs"]
+                        for acl in wafv2_cf_acl_list:
+                            WAFv2List.append(acl["ARN"])
+                    
+                    logging.info("List of Web ACLs found within account " + org_account + ", region " + aws_region + ":")
+                    print(WAFv2List)
+
+                    # ListLoggingConfigurations returns only Web ACLs with logging already enabled
+                    logging.info("ListLoggingConfigurations API Call")
+                    wafv2_regional_log_configs = wafv2_ma.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+                    for acl in wafv2_regional_log_configs:
+                        WAFv2LogList.append(acl["ResourceArn"])
+
+                    if aws_region == 'us-east-1':
+                        logging.info("Checking Global (CloudFront) Web ACL Logging Configurations")
+                        logging.info("ListLoggingConfigurations API Call")
+                        wafv2_cf_log_configs = wafv2_ma.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                        for acl in wafv2_cf_log_configs:
+                            WAFv2LogList.append(acl["ResourceArn"])
+                    
+                    WAFv2NoLogList = list(set(WAFv2List) - set(WAFv2LogList))
+                    logging.info("List of Web ACLs found within account " + org_account + ", region " + aws_region + " WITHOUT logging enabled:")
+                    print(WAFv2NoLogList)
+
+                    # If an S3 bucket hasn't been created yet, create one
+                    if WAFv2NoLogList != [] and bucket_arn == "":
+                        logging.info("Creating S3 bucket for WAF logs enabled by Assisted Log Enabler.")
+                        unique_end = random_string_generator()
+                        bucket_name = "aws-waf-logs-ale-" + account_number + "-" + unique_end
+                        logging.info("CreateBucket API Call")
+                        s3.create_bucket(Bucket=bucket_name)
+                        logging.info("Bucket " + bucket_name + " created.")
+                        bucket_arn = "arn:aws:s3:::" + bucket_name
+                        
+                        # Set lifecycle policy and block public access
+                        logging.info("Setting lifecycle policy.")
+                        logging.info("PutBucketLifecycleConfiguration API Call")
+                        s3.put_bucket_lifecycle_configuration(
+                            Bucket=bucket_name,
+                            LifecycleConfiguration={
+                                'Rules': [
+                                    {
+                                        'Expiration': {
+                                            'Days': 365
+                                        },
+                                        'Status': 'Enabled',
+                                        'Prefix': '',
+                                        'ID': 'LogStorage',
+                                        'Transitions': [
+                                            {
+                                                'Days': 90,
+                                                'StorageClass': 'INTELLIGENT_TIERING'
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        )
+                        logging.info("Setting the S3 bucket Public Access to Blocked")
+                        logging.info("PutPublicAccessBlock API Call")
+                        bucket_private = s3.put_public_access_block(
+                            Bucket=bucket_name,
+                            PublicAccessBlockConfiguration={
+                                'BlockPublicAcls': True,
+                                'IgnorePublicAcls': True,
+                                'BlockPublicPolicy': True,
+                                'RestrictPublicBuckets': True
+                            },
+                        )
+
+                        logging.info("Setting the S3 bucket policy to allow multi-account access.")
+                        logging.info("PutBucketPolicy API Call")
+                        s3.put_bucket_policy(
+                            Bucket=bucket_name,
+                            Policy='{ "Version": "2012-10-17", "Id": "AWSLogDeliveryWrite20150319", "Statement": [ { "Sid": "AWSLogDeliveryWrite", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "' + bucket_arn + '/*", "Condition": { "StringEquals": { "aws:ResourceOrgID": "' + organization_id + '" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "' + bucket_arn + '", "Condition": { "StringEquals": { "aws:ResourceOrgID": "' + organization_id + '" } } } ] }'
+                        )
+
+                    # If an S3 bucket has been created, use it as the log destination
+                    if WAFv2NoLogList != [] and bucket_arn != "":
+                        for arn in WAFv2NoLogList:
+                            logging.info(arn + " does not have logging turned on. Turning on logging.")
+                            logging.info("PutLoggingConfiguration API Call")
+                            wafv2_ma.put_logging_configuration(
+                                LoggingConfiguration={
+                                    'ResourceArn': arn,
+                                    'LogDestinationConfigs': [ 
+                                        bucket_arn, 
+                                    ]
+                                }
+                            )
+                    else:
+                        logging.info("No WAFv2 Web ACLs to enable logging for in account " + org_account + ", region " + aws_region + ".")
+                
+                except Exception as exception_handle:
+                    logging.error(exception_handle)
 
 def run_eks(included_accounts='all', excluded_accounts='none'):
     """Function that runs the defined EKS logging code"""
@@ -811,6 +948,12 @@ def run_guardduty(included_accounts='all', excluded_accounts='none'):
     check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_wafv2_logs(included_accounts='all', excluded_accounts='none'):
+    """Function that runs the defined WAFv2 Logging code"""
+    OrgAccountIdList, organization_id = org_account_grab()
+    wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
 def lambda_handler(event, context, bucket_name='default', included_accounts='all', excluded_accounts='none'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
@@ -826,6 +969,7 @@ def lambda_handler(event, context, bucket_name='default', included_accounts='all
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
+    wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

@@ -74,6 +74,9 @@ Resources:
               - guardduty:ListDetectors
               - guardduty:TagResource
               - guardduty:CreateDetector
+              - wafv2:ListWebACLs
+              - wafv2:ListLoggingConfigurations
+              - wafv2:PutLoggingConfiguration
             Resource: '*'
             Condition:
               StringEquals:

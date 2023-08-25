@@ -89,6 +89,7 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--lblogs', action='store_true', help=' Turns on Amazon Load Balancer Logs.')
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail. Only available in Single Account version.')
     function_parser_group.add_argument('--guardduty', action='store_true', help=' Turns on Amazon GuardDuty.')
+    function_parser_group.add_argument('--wafv2', action='store_true', help=' Turns on AWS WAFv2 Logs')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
     cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Removes Amazon Route 53 Resolver Query Log resources created by Assisted Log Enabler for AWS.')
@@ -97,7 +98,8 @@ def assisted_log_enabler():
     cleanup_parser_group.add_argument('--single_all', action='store_true', help=' Turns off all of the log types within the Assisted Log Enabler for AWS.')
     cleanup_parser_group.add_argument('--single_s3logs', action='store_true', help=' Removes Amazon Bucket Log resources created by Assisted Log Enabler for AWS.')
     cleanup_parser_group.add_argument('--single_lblogs', action='store_true', help=' Removes Amazon Load Balancer Log resources created by Assisted Log Enabler for AWS.')
-    cleanup_parser_group.add_argument('--single_guardduty', action='store_true', help=' Removes GuardDuty detectors created by Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_guardduty', action='store_true', help=' Removes Amazon GuardDuty detectors created by Assisted Log Enabler for AWS.')
+    cleanup_parser_group.add_argument('--single_wafv2', action='store_true', help=' Removes AWS WAFv2 Logging Configurations created by Assisted Log Enabler for AWS.')
 
     dryrun_parser_group = parser.add_argument_group('Dry Run Options', 'Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.')
     dryrun_parser_group.add_argument('--single_account', action='store_true', help=' Runs Assisted Log Enabler for AWS in Dry Run mode for a single AWS account.')
@@ -128,6 +130,8 @@ def assisted_log_enabler():
             ALE_single_account.run_cloudtrail(bucket_name)
         elif args.guardduty:
             ALE_single_account.run_guardduty()
+        elif args.wafv2:
+            ALE_single_account.run_wafv2_logs()
         elif args.all:
             ALE_single_account.lambda_handler(event, context, bucket_name)
         else:
@@ -164,6 +168,8 @@ def assisted_log_enabler():
             ALE_multi_account.run_lb_logs(included_accounts, excluded_accounts)
         elif args.guardduty:
             ALE_multi_account.run_guardduty(included_accounts, excluded_accounts)
+        elif args.wafv2:
+            ALE_multi_account.run_wafv2_logs(included_accounts, excluded_accounts)
         elif args.all:
             ALE_multi_account.lambda_handler(event, context, bucket_name, included_accounts, excluded_accounts)
         else:
@@ -181,6 +187,8 @@ def assisted_log_enabler():
             ALE_cleanup_single.run_vpcflow_cleanup()
         elif args.single_guardduty:
             ALE_cleanup_single.run_guardduty_cleanup()
+        elif args.single_wafv2:
+            ALE_cleanup_single.run_wafv2_cleanup()
         elif args.single_all:
             ALE_cleanup_single.lambda_handler(event, context)
         else:

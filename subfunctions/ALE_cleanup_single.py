@@ -340,18 +340,46 @@ def guardduty_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def waf_cleanup():
+    """Function to cleanup WAFv2 Logging Configurations"""
+    logging.info("Cleaning up WAFv2 logging previously enabled by Assisted Log Enabler.")
+
+    for aws_region in region_list:
+        wafv2 = boto3.client('wafv2', region_name=aws_region)
+        try:
+            logging.info("Checking Web ACL logging configurations in region " + aws_region + ".")
+            logging.info("ListLoggingConfigurations API Call")
+            log_configs_regional = wafv2.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+            for acl in log_configs_regional:
+                for destination in acl["LogDestinationConfigs"]:
+                    if "aws-waf-logs-ale-" in destination:
+                        logging.info("Deleting logging configuration for " + acl["ResourceArn"])
+                        logging.info("DeleteLoggingConfiguration API Call")
+                        wafv2.delete_logging_configuration(ResourceArn=acl["ResourceArn"])
+
+            if aws_region == 'us-east-1':
+                logging.info("Checking Global Web ACL logging configurations.")
+                logging.info("ListLoggingConfigurations API Call")
+                log_configs_cf = wafv2.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                for acl in log_configs_cf:
+                    for destination in acl["LogDestinationConfigs"]:
+                        if "aws-waf-logs-ale-" in destination:
+                            logging.info("Deleting logging configuration for " + acl["ResourceArn"])
+                            logging.info("DeleteLoggingConfiguration API Call")
+                            wafv2.delete_logging_configuration(ResourceArn=acl["ResourceArn"])
+        
+        except Exception as exception_handle:
+            logging.error(exception_handle)
 
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
     vpcflow_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
-
 def run_cloudtrail_cleanup():
     """Function to run the cloudtrail_cleanup function"""
     cloudtrail_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
-
 
 def run_r53_cleanup():
     """Function to run the r53_cleanup function"""
@@ -373,6 +401,11 @@ def run_guardduty_cleanup():
     guardduty_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_wafv2_cleanup():
+    """Function to run the wafv2_cleanup function"""
+    waf_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     r53_cleanup()
@@ -381,6 +414,7 @@ def lambda_handler(event, context):
     s3_cleanup()
     lb_cleanup()
     guardduty_cleanup()
+    waf_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 

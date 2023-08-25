@@ -68,10 +68,13 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:GetBucketAcl",
 "s3:PutBucketAcl",
 "s3:PutBucketPublicAccessBlock",
-"s3:PutBucketLifecycleConfiguration"
-"guardduty:ListDetectors"
-"guardduty:TagResource"
-"guardduty:CreateDetector"
+"s3:PutBucketLifecycleConfiguration",
+"guardduty:ListDetectors",
+"guardduty:TagResource",
+"guardduty:CreateDetector",
+"wafv2:ListWebACLs",
+"wafv2:ListLoggingConfigurations",
+"wafv2:PutLoggingConfiguration"
 
 # For adding AWS CloudTrail logs:
 "s3:GetBucketPolicy",
@@ -135,9 +138,14 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "elasticloadbalancing:ModifyLoadBalancerAttributes"
 
 # For enabling GuardDuty:
-"guardduty:ListDetectors"
-"guardduty:TagResource"
+"guardduty:ListDetectors",
+"guardduty:TagResource",
 "guardduty:CreateDetector"
+
+# For adding WAFv2 logging:
+"wafv2:ListWebACLs",
+"wafv2:ListLoggingConfigurations",
+"wafv2:PutLoggingConfiguration"
 
 # For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
 "route53resolver:ListResolverQueryLogConfigs",

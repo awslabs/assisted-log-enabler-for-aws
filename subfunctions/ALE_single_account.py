@@ -670,6 +670,115 @@ def check_guardduty():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def wafv2_logs():
+    """Function to turn on WAFv2 Logging"""
+    account_number = sts.get_caller_identity()["Account"]
+    bucket_arn = ""
+    for aws_region in region_list:
+        wafv2 = boto3.client('wafv2', region_name=aws_region)
+        logging.info("Checking for WAFv2 Logging in the account " + account_number + ", region " + aws_region)
+        try:
+            WAFv2List: list = [] # list of all WAFv2 ARNs
+            WAFv2LogList: list = [] # list of WAFv2 ARNs with logging enabled
+            WAFv2NoLogList: list = [] # list of WAFv2 ARNs to enable logging
+
+            # Get regional WAFv2 Web ACLs
+            logging.info("ListWebAcls API Call")
+            wafv2_regional_acl_list = wafv2.list_web_acls(Scope='REGIONAL')["WebACLs"]
+            for acl in wafv2_regional_acl_list:
+                WAFv2List.append(acl["ARN"])
+            
+            if aws_region == 'us-east-1':
+                # Get CloudFront (global) WAFv2 Web ACLs
+                logging.info("Checking for Global (CloudFront) Web ACLs")
+                logging.info("ListWebAcls API Call")
+                wafv2_cf_acl_list = wafv2.list_web_acls(Scope='CLOUDFRONT')["WebACLs"]
+                for acl in wafv2_cf_acl_list:
+                    WAFv2List.append(acl["ARN"])
+            
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + ":")
+            print(WAFv2List)
+
+            logging.info("ListLoggingConfigurations API Call")
+            wafv2_regional_log_configs = wafv2.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+            for acl in wafv2_regional_log_configs:
+                WAFv2LogList.append(acl["ResourceArn"])
+            
+            if aws_region == 'us-east-1':
+                logging.info("Checking Global (CloudFront) Web ACL Logging Configurations")
+                logging.info("ListLoggingConfigurations API Call")
+                wafv2_cf_log_configs = wafv2.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                for acl in wafv2_cf_log_configs:
+                    WAFv2LogList.append(acl["ResourceArn"])
+            
+            WAFv2NoLogList = list(set(WAFv2List) - set(WAFv2LogList))
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + " WITHOUT logging enabled:")
+            print(WAFv2NoLogList)
+
+            # If an S3 bucket hasn't been created yet, create one
+            if WAFv2NoLogList != [] and bucket_arn == "":
+                logging.info("Creating S3 bucket for WAF logs enabled by Assisted Log Enabler.")
+                unique_end = random_string_generator()
+                bucket_name = "aws-waf-logs-ale-" + account_number + "-" + unique_end
+                logging.info("CreateBucket API Call")
+                s3.create_bucket(Bucket=bucket_name)
+                logging.info("Bucket " + bucket_name + " created.")
+                bucket_arn = "arn:aws:s3:::" + bucket_name
+                
+                logging.info("Setting lifecycle policy.")
+                logging.info("PutBucketLifecycleConfiguration API Call")
+                s3.put_bucket_lifecycle_configuration(
+                    Bucket=bucket_name,
+                    LifecycleConfiguration={
+                        'Rules': [
+                            {
+                                'Expiration': {
+                                    'Days': 365
+                                },
+                                'Status': 'Enabled',
+                                'Prefix': '',
+                                'ID': 'LogStorage',
+                                'Transitions': [
+                                    {
+                                        'Days': 90,
+                                        'StorageClass': 'INTELLIGENT_TIERING'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                )
+                logging.info("Setting the S3 bucket Public Access to Blocked")
+                logging.info("PutPublicAccessBlock API Call")
+                bucket_private = s3.put_public_access_block(
+                    Bucket=bucket_name,
+                    PublicAccessBlockConfiguration={
+                        'BlockPublicAcls': True,
+                        'IgnorePublicAcls': True,
+                        'BlockPublicPolicy': True,
+                        'RestrictPublicBuckets': True
+                    },
+                )
+            
+            # If an S3 bucket has been created, use it as the log destination
+            if WAFv2NoLogList != [] and bucket_arn != "":
+                for arn in WAFv2NoLogList:
+                    logging.info(arn + " does not have logging turned on. Turning on logging.")
+                    logging.info("PutLoggingConfiguration API Call")
+                    wafv2.put_logging_configuration(
+                        LoggingConfiguration={
+                            'ResourceArn': arn,
+                            'LogDestinationConfigs': [ 
+                                bucket_arn, 
+                            ]
+                        }
+                    )
+            else:
+                logging.info("No WAFv2 Web ACLs to enable logging for in account " + account_number + ", region " + aws_region + ".")
+
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 
 def run_eks():
     """Function that runs the defined EKS logging code"""
@@ -725,6 +834,11 @@ def run_guardduty():
     check_guardduty()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_wafv2_logs():
+    """Functio that runs the defined WAFv2 Logging code"""
+    wafv2_logs()
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
 def lambda_handler(event, context, bucket_name='default'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
@@ -740,6 +854,7 @@ def lambda_handler(event, context, bucket_name='default'):
     s3_logs(region_list, unique_end)
     lb_logs(region_list, unique_end)
     check_guardduty()
+    wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
