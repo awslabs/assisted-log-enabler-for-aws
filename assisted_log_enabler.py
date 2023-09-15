@@ -75,8 +75,8 @@ def assisted_log_enabler():
     output_handle.setFormatter(formatter)
 
     parser = argparse.ArgumentParser(description='Assisted Log Enabler - Find resources that are not logging, and turn them on.')
-    parser.add_argument('--mode',help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account, cleanup, dryrun. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
-    parser.add_argument('--bucket',help=' Specify the name of a pre-existing S3 bucket that you want Assisted Log Enabler to store logs in. Otherwise, a new S3 bucket will be created (default). Only used for Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, and AWS CloudTrail logs. WARNING: For multi_account, this will replace the bucket policy. For single_account, this may add statements to the bucket policy.')
+    parser.add_argument('--mode', help=' Choose the mode that you want to run Assisted Log Enabler in. Available modes: single_account, multi_account, cleanup, dryrun. WARNING: For multi_account, You must have the associated CloudFormation template deployed as a StackSet. See the README file for more details.')
+    parser.add_argument('--bucket', help=' Specify the name of a pre-existing S3 bucket that you want Assisted Log Enabler to store logs in. Otherwise, a new S3 bucket will be created (default). Only used for Amazon VPC Flow Logs, Amazon Route 53 Resolver Query Logs, AWS CloudTrail logs, and Amazon GuardDuty. WARNING: This will replace the bucket policy.')
     parser.add_argument('--include_accounts', metavar='ACCOUNT_NUMBERS', help=' Specify a comma separated list of AWS account numbers to INCLUDE for multi_account mode.')
     parser.add_argument('--exclude_accounts', metavar='ACCOUNT_NUMBERS', help=' Specify a comma separated list of AWS account numbers to EXCLUDE for multi_account mode.')
 
@@ -88,7 +88,7 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--s3logs', action='store_true', help=' Turns on Amazon Bucket Logs.')
     function_parser_group.add_argument('--lblogs', action='store_true', help=' Turns on Amazon Load Balancer Logs.')
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail. Only available in Single Account version.')
-    function_parser_group.add_argument('--guardduty', action='store_true', help=' Turns on Amazon GuardDuty.')
+    function_parser_group.add_argument('--guardduty', action='store_true', help=' Turns on Amazon GuardDuty and exports findings to an S3 bucket. Will used specified bucket. WARNING: This creates a KMS Key to export findings.')
     function_parser_group.add_argument('--wafv2', action='store_true', help=' Turns on AWS WAFv2 Logs')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
@@ -129,7 +129,7 @@ def assisted_log_enabler():
         elif args.cloudtrail:
             ALE_single_account.run_cloudtrail(bucket_name)
         elif args.guardduty:
-            ALE_single_account.run_guardduty()
+            ALE_single_account.run_guardduty(bucket_name)
         elif args.wafv2:
             ALE_single_account.run_wafv2_logs()
         elif args.all:
@@ -167,7 +167,7 @@ def assisted_log_enabler():
         elif args.lblogs:
             ALE_multi_account.run_lb_logs(included_accounts, excluded_accounts)
         elif args.guardduty:
-            ALE_multi_account.run_guardduty(included_accounts, excluded_accounts)
+            ALE_multi_account.run_guardduty(bucket_name, included_accounts, excluded_accounts)
         elif args.wafv2:
             ALE_multi_account.run_wafv2_logs(included_accounts, excluded_accounts)
         elif args.all:

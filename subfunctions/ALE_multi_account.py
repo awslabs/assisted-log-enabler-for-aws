@@ -67,7 +67,7 @@ def get_account_number():
 
 
 # 3. Create a Bucket and Lifecycle Policy
-def create_bucket(organization_id, account_number, unique_end):
+def create_bucket(OrgAccountIdList, account_number, unique_end):
     """Function to create the bucket for storing logs"""
     try:
         logging.info("Creating bucket in %s" % account_number)
@@ -117,9 +117,17 @@ def create_bucket(organization_id, account_number, unique_end):
         create_ct_path_r53 = s3.put_object(
             Bucket=bucket_name,
             Key='r53querylogs/')
+        
+        # Convert list of account IDs and ALE roles to JSON format
+        account_id_list = json.dumps(OrgAccountIdList)
+        role_list = []
+        for id in OrgAccountIdList:
+            role_list.append("arn:aws:iam::" + id + ":role/Assisted_Log_Enabler_IAM_Role")
+        ale_role_list = json.dumps(role_list)
+
         bucket_policy = s3.put_bucket_policy(
             Bucket=bucket_name,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow GuardDuty Cross-Account S3 Permissions", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": [ "s3:PutObject", "s3:GetBucketLocation" ], "Resource": [ "arn:aws:s3:::' + bucket_name + '", "arn:aws:s3:::' + bucket_name + '/guardduty/*" ], "Condition": { "StringEquals": { "aws:SourceAccount": ' + account_id_list + ' } } }, { "Sid": "Allow ALE Role to bucket", "Effect": "Allow", "Principal": { "AWS": ' + ale_role_list + ' }, "Action": [ "s3:GetObject", "s3:ListBucket" ], "Resource": [ "arn:aws:s3:::' + bucket_name + '", "arn:aws:s3:::' + bucket_name + '/*" ] } ] }'
         )
         logging.info("Setting the S3 bucket Public Access to Blocked")
         logging.info("PutPublicAccessBlock API Call")
@@ -137,13 +145,20 @@ def create_bucket(organization_id, account_number, unique_end):
     return bucket_name
 
 # If custom bucket is supplied, update the bucket policy
-def update_custom_bucket_policy(bucket_name, account_number):
+def update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList):
+    # Convert list of account IDs and ALE roles to JSON format
+    account_id_list = json.dumps(OrgAccountIdList)
+    role_list = []
+    for id in OrgAccountIdList:
+        role_list.append("arn:aws:iam::" + id + ":role/Assisted_Log_Enabler_IAM_Role")
+    ale_role_list = json.dumps(role_list)
+
+    logging.info("Pre-existing S3 bucket specified. Updating bucket policy.")
+    logging.info("PutBucketPolicy API Call")
     s3.put_bucket_policy(
             Bucket=bucket_name,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryAclCheck","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSLogDeliveryWriteVPC","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Sid": "AWSLogDeliveryWriteR53","Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow GuardDuty Cross-Account S3 Permissions", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": [ "s3:PutObject", "s3:GetBucketLocation" ], "Resource": [ "arn:aws:s3:::' + bucket_name + '", "arn:aws:s3:::' + bucket_name + '/guardduty/*" ], "Condition": { "StringEquals": { "aws:SourceAccount": ' + account_id_list + ' } } }, { "Sid": "Allow ALE Role to bucket", "Effect": "Allow", "Principal": { "AWS": ' + ale_role_list + ' }, "Action": [ "s3:GetObject", "s3:ListBucket" ], "Resource": [ "arn:aws:s3:::' + bucket_name + '", "arn:aws:s3:::' + bucket_name + '/*" ] } ] }'
         )
-
-
 
 # 4. Find VPCs and turn flow logs on if not on already.
 def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts):
@@ -701,8 +716,37 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
-def check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts):
+def check_guardduty(region_list, account_number, OrgAccountIdList, organization_id, bucket_name, included_accounts, excluded_accounts):
     """Function to turn on GuardDuty"""
+    
+    account_id_list = json.dumps(OrgAccountIdList)
+    logging.info("Creating KMS key for GuardDuty to export findings.")
+    kms = boto3.client('kms')
+    logging.info("CreateKey API Call")
+    export_key = kms.create_key(
+        Policy='{ "Version": "2012-10-17", "Statement": [ { "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::' + account_number + ':root" }, "Action": "kms:*", "Resource": "*" }, { "Sid": "Allow GuardDuty to use the key", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": [ "kms:GenerateDataKey" ], "Resource": "*", "Condition": { "StringEquals": { "aws:SourceAccount": ' + account_id_list + ' } } } ] }',
+        KeyUsage="ENCRYPT_DECRYPT",
+        KeySpec="SYMMETRIC_DEFAULT",
+        Origin="AWS_KMS",
+        MultiRegion=False
+    )
+    key_arn = export_key["KeyMetadata"]["Arn"]
+    logging.info("Created KMS Key " + key_arn)
+    key_alias = "alias/ale-guardduty-key-" + random_string_generator()
+    logging.info("CreateAlias API Call")
+    kms.create_alias(
+        AliasName=key_alias,
+        TargetKeyId=key_arn
+    )
+    logging.info("Created KMS Key Alias " + key_alias)
+
+    logging.info("Creating /guardduty folder in S3 Bucket")
+    logging.info("PutObject API Call")
+    s3.put_object(
+        Bucket=bucket_name,
+        Key="guardduty/"
+    )
+
     for org_account in OrgAccountIdList:
         if excluded_accounts != 'none' and org_account in excluded_accounts:
             continue
@@ -748,8 +792,48 @@ def check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_a
                             }
                             )
                         logging.info("Created GuardDuty detector ID " + new_detector["DetectorId"])
+
+                        logging.info("Exporting GuardDuty findings to an S3 bucket.")
+                        logging.info("Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                        logging.info("CreatePublishingDestination API Call")
+                        guardduty_ma.create_publishing_destination(
+                            DetectorId=new_detector["DetectorId"],
+                            DestinationType="S3",
+                            DestinationProperties={
+                                "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                                "KmsKeyArn": key_arn
+                            }
+                        )
                     else:
                         logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
+
+                        detector_id = detectors["DetectorIds"][0]
+                        logging.info("Checking if GuardDuty detector publishes findings to S3.")
+                        logging.info("ListPublishingDestinations API Call")
+                        gd_destinations = guardduty_ma.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
+                        if gd_destinations == []:
+                            logging.info("Detector does not publish findings to a destination. Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                            logging.info("CreatePublishingDestination API Call")
+                            guardduty_ma.create_publishing_destination(
+                                DetectorId=detector_id,
+                                DestinationType="S3",
+                                DestinationProperties={
+                                    "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                                    "KmsKeyArn": key_arn
+                                }
+                            )
+                        else:
+                            for dest in gd_destinations:
+                                if dest["DestinationType"] == "S3":
+                                    dest_id = dest["DestinationId"]
+                                    logging.info("DescribePublishingDestination API Call")
+                                    dest_info = guardduty_ma.describe_publishing_destination(
+                                        DetectorId=detector_id,
+                                        DestinationId=dest_id
+                                    )
+                                    dest_s3_arn = dest_info["DestinationProperties"]["DestinationArn"]
+                                    logging.info("Detector already publishes findings to S3 bucket " + dest_s3_arn.split(":")[-1])
+
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
@@ -905,9 +989,9 @@ def run_vpc_flow_logs(bucket_name='default', included_accounts='all', excluded_a
     account_number = get_account_number()
     if bucket_name == 'default':
         unique_end = random_string_generator()
-        bucket_name = create_bucket(organization_id, account_number, unique_end)
+        bucket_name = create_bucket(OrgAccountIdList, account_number, unique_end)
     else:
-        update_custom_bucket_policy(bucket_name, account_number)
+        update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
     
     flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
@@ -919,9 +1003,9 @@ def run_r53_query_logs(bucket_name='default', included_accounts='all', excluded_
     account_number = get_account_number()
     if bucket_name == 'default':
         unique_end = random_string_generator()
-        bucket_name = create_bucket(organization_id, account_number, unique_end)
+        bucket_name = create_bucket(OrgAccountIdList, account_number, unique_end)
     else:
-        update_custom_bucket_policy(bucket_name, account_number)
+        update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
     
     route_53_query_logs(region_list, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
@@ -942,10 +1026,17 @@ def run_lb_logs(included_accounts='all', excluded_accounts='none'):
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def run_guardduty(included_accounts='all', excluded_accounts='none'):
+def run_guardduty(bucket_name='default', included_accounts='all', excluded_accounts='none'):
     """Function that runs the defined GuardDuty enablement code"""
     OrgAccountIdList, organization_id = org_account_grab()
-    check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
+    account_number = get_account_number()
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(OrgAccountIdList, account_number, unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
+
+    check_guardduty(region_list, account_number, OrgAccountIdList, organization_id, bucket_name, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_wafv2_logs(included_accounts='all', excluded_accounts='none'):
@@ -960,15 +1051,15 @@ def lambda_handler(event, context, bucket_name='default', included_accounts='all
     account_number = get_account_number()
     OrgAccountIdList, organization_id = org_account_grab()
     if bucket_name == 'default':
-        bucket_name = create_bucket(organization_id, account_number, unique_end)
+        bucket_name = create_bucket(OrgAccountIdList, account_number, unique_end)
     else:
-        update_custom_bucket_policy(bucket_name, account_number)
+        update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
     flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts)
     eks_logging(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
     route_53_query_logs(region_list, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
-    check_guardduty(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
+    check_guardduty(region_list, account_number, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 

@@ -207,6 +207,8 @@ def dryrun_lb_logs(region_list, account_number):
 
 def dryrun_check_guardduty(region_list, account_number):
     """Function to check if GuardDuty is enabled"""
+    logging.info("Creating KMS key for GuardDuty to export findings.")
+    logging.info("Creating /guardduty folder in S3 Bucket")
     for aws_region in region_list:
         guardduty = boto3.client('guardduty', region_name=aws_region)
         logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
@@ -215,8 +217,28 @@ def dryrun_check_guardduty(region_list, account_number):
             detectors = guardduty.list_detectors()
             if detectors["DetectorIds"] == []:
                 logging.info("GuardDuty is not enabled in the account" + account_number + ", region " + aws_region)
+                logging.info("Enabling GuardDuty")
+                logging.info("Exporting GuardDuty findings to an S3 bucket.")
+                logging.info("Setting S3 Bucket as publishing destination for GuardDuty detector.")
             else:
                 logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+                detector_id = detectors["DetectorIds"][0]
+                logging.info("Checking if GuardDuty detector publishes findings to S3.")
+                logging.info("ListPublishingDestinations API Call")
+                gd_destinations = guardduty.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
+                if gd_destinations == []:
+                    logging.info("Detector does not publish findings to a destination. Setting S3 Bucket as publishing destination for GuardDuty detector.")
+                else:
+                    for dest in gd_destinations:
+                        if dest["DestinationType"] == "S3":
+                            dest_id = dest["DestinationId"]
+                            logging.info("DescribePublishingDestination API Call")
+                            dest_info = guardduty.describe_publishing_destination(
+                                DetectorId=detector_id,
+                                DestinationId=dest_id
+                            )
+                            dest_s3_arn = dest_info["DestinationProperties"]["DestinationArn"]
+                            logging.info("Detector already publishes findings to S3 bucket " + dest_s3_arn.split(":")[-1])
         except Exception as exception_handle:
             logging.error(exception_handle)
 

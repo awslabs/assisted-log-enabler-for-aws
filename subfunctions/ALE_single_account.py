@@ -88,7 +88,7 @@ def create_bucket(unique_end):
         logging.info("PutBucketPolicy API Call")
         bucket_policy = s3.put_bucket_policy(
             Bucket=bucket_name,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::' + bucket_name + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow PutObject", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*" }, { "Sid": "Allow GetBucketLocation", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:GetBucketLocation", "Resource": "arn:aws:s3:::' + bucket_name + '" } ] }'
         )
         logging.info("Setting the S3 bucket Public Access to Blocked")
         logging.info("PutPublicAccessBlock API Call")
@@ -105,6 +105,14 @@ def create_bucket(unique_end):
         logging.error(exception_handle)
     return bucket_name
 
+# If custom bucket is supplied, update the bucket policy
+def update_custom_bucket_policy(bucket_name, account_number):
+    logging.info("Pre-existing S3 bucket specified. Updating bucket policy.")
+    logging.info("PutBucketPolicy API Call")
+    s3.put_bucket_policy(
+            Bucket=bucket_name,
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow PutObject", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*" }, { "Sid": "Allow GetBucketLocation", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:GetBucketLocation", "Resource": "arn:aws:s3:::' + bucket_name + '" } ] }'
+        )
 
 # 2. Find VPCs and turn flow logs on if not on already.
 def flow_log_activator(region_list, account_number, bucket_name):
@@ -158,7 +166,7 @@ def flow_log_activator(region_list, account_number, bucket_name):
 
 
 # 3. Check to see if a CloudTrail trail is configured, and turn it on if it is not.
-def check_cloudtrail(account_number, bucket_name, custom_bucket):
+def check_cloudtrail(account_number, bucket_name):
     """Function to check if CloudTrail is enabled"""
     logging.info("Checking to see if CloudTrail is on, and will activate if needed.")
     try:
@@ -166,45 +174,7 @@ def check_cloudtrail(account_number, bucket_name, custom_bucket):
         cloudtrail_status = cloudtrail.describe_trails(
             includeShadowTrails=True
         )
-        if cloudtrail_status["trailList"][0]["Name"] == "":
-            if custom_bucket:
-                logging.info("Pre-existing S3 bucket specified: checking if the bucket policy allows CloudTrail to access the bucket.")
-
-                statement1 = {"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::" + bucket_name }
-                statement2 = {"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::" + bucket_name + "/cloudtrail/AWSLogs/" + account_number + "/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}
-                
-                logging.info("GetBucketPolicy API Call")
-                original_policy = s3.get_bucket_policy(Bucket=bucket_name)["Policy"]
-
-                policy = json.loads(original_policy)
-
-                if statement1["Sid"] in original_policy and statement2["Sid"] in original_policy:
-                    logging.info("Required statements already exist in the bucket policy for " + bucket_name)
-                else:
-                    if statement1["Sid"] not in original_policy:
-                        logging.info("Adding statement " + statement1["Sid"] + " to " + bucket_name + " bucket policy.")
-                        policy["Statement"].append(statement1)
-
-                        new_policy = json.dumps(policy)
-
-                        logging.info("PutBucketPolicy API Call")
-                        s3.put_bucket_policy(
-                            Bucket=bucket_name,
-                            Policy=new_policy
-                        )
-
-                    if statement2["Sid"] not in original_policy:
-                        logging.info("Adding statement " + statement2["Sid"] + " to " + bucket_name + " bucket policy.")
-                        policy["Statement"].append(statement2)
-
-                        new_policy = json.dumps(policy)
-
-                        logging.info("PutBucketPolicy API Call")
-                        s3.put_bucket_policy(
-                            Bucket=bucket_name,
-                            Policy=new_policy
-                        )
-
+        if cloudtrail_status["trailList"] == []:
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
                 Name='assisted-log-enabler-ct-' + account_number,
@@ -634,10 +604,36 @@ def lb_logs(region_list, unique_end):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def check_guardduty(region_list, account_number, bucket_name):
+    """Function to turn on GuardDuty and export findings to an S3 bucket."""
 
-def check_guardduty():
-    """Function to turn on GuardDuty"""
-    account_number = sts.get_caller_identity()["Account"]
+    logging.info("Creating KMS key for GuardDuty to export findings.")
+    kms = boto3.client('kms')
+    logging.info("CreateKey API Call")
+    export_key = kms.create_key(
+        Policy="{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"AWS\": \"arn:aws:iam::" + account_number + ":root\" }, \"Action\": \"kms:*\", \"Resource\": \"*\" }, { \"Sid\": \"Allow GuardDuty to use the key\", \"Effect\": \"Allow\", \"Principal\": { \"Service\": \"guardduty.amazonaws.com\" }, \"Action\": \"kms:GenerateDataKey\", \"Resource\": \"*\" } ] }",
+        KeyUsage="ENCRYPT_DECRYPT",
+        KeySpec="SYMMETRIC_DEFAULT",
+        Origin="AWS_KMS",
+        MultiRegion=False
+    )
+    key_arn = export_key["KeyMetadata"]["Arn"]
+    logging.info("Created KMS Key " + key_arn)
+    key_alias = "alias/ale-guardduty-key-" + random_string_generator()
+    logging.info("CreateAlias API Call")
+    kms.create_alias(
+        AliasName=key_alias,
+        TargetKeyId=key_arn
+    )
+    logging.info("Created KMS Key Alias " + key_alias)
+
+    logging.info("Creating /guardduty folder in S3 Bucket")
+    logging.info("PutObject API Call")
+    s3.put_object(
+        Bucket=bucket_name,
+        Key="guardduty/"
+    )
+
     for aws_region in region_list:
         guardduty = boto3.client('guardduty', region_name=aws_region)
         logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
@@ -645,7 +641,7 @@ def check_guardduty():
             logging.info("ListDetectors API Call")
             detectors = guardduty.list_detectors()
             if detectors["DetectorIds"] == []:
-                logging.info("GuardDuty is not enabled in the account" + account_number + ", region " + aws_region)
+                logging.info("GuardDuty is not enabled in the account " + account_number + ", region " + aws_region)
                 logging.info("Enabling GuardDuty")
                 logging.info("CreateDetector API Call")
                 new_detector = guardduty.create_detector(
@@ -665,8 +661,46 @@ def check_guardduty():
                     }
                     )
                 logging.info("Created GuardDuty detector ID " + new_detector["DetectorId"])
+
+                logging.info("Exporting GuardDuty findings to an S3 bucket.")
+                logging.info("Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                logging.info("CreatePublishingDestination API Call")
+                guardduty.create_publishing_destination(
+                    DetectorId=new_detector["DetectorId"],
+                    DestinationType="S3",
+                    DestinationProperties={
+                        "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                        "KmsKeyArn": key_arn
+                    }
+                )
             else:
                 logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+                detector_id = detectors["DetectorIds"][0]
+                logging.info("Checking if GuardDuty detector publishes findings to S3.")
+                logging.info("ListPublishingDestinations API Call")
+                gd_destinations = guardduty.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
+                if gd_destinations == []:
+                    logging.info("Detector does not publish findings to a destination. Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                    logging.info("CreatePublishingDestination API Call")
+                    guardduty.create_publishing_destination(
+                        DetectorId=detector_id,
+                        DestinationType="S3",
+                        DestinationProperties={
+                            "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                            "KmsKeyArn": key_arn
+                        }
+                    )
+                else:
+                    for dest in gd_destinations:
+                        if dest["DestinationType"] == "S3":
+                            dest_id = dest["DestinationId"]
+                            logging.info("DescribePublishingDestination API Call")
+                            dest_info = guardduty.describe_publishing_destination(
+                                DetectorId=detector_id,
+                                DestinationId=dest_id
+                            )
+                            dest_s3_arn = dest_info["DestinationProperties"]["DestinationArn"]
+                            logging.info("Detector already publishes findings to S3 bucket " + dest_s3_arn.split(":")[-1])
         except Exception as exception_handle:
             logging.error(exception_handle)
 
@@ -785,7 +819,6 @@ def run_eks():
     eks_logging(region_list)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-
 def run_cloudtrail(bucket_name='default'):
     """Function that runs the defined CloudTrail logging code"""
     custom_bucket = True
@@ -797,7 +830,6 @@ def run_cloudtrail(bucket_name='default'):
     check_cloudtrail(account_number, bucket_name, custom_bucket)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-
 def run_vpc_flow_logs(bucket_name='default'):
     """Function that runs the defined VPC Flow Log logging code"""
     if bucket_name == 'default':
@@ -807,7 +839,6 @@ def run_vpc_flow_logs(bucket_name='default'):
     flow_log_activator(region_list, account_number, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
     
-
 def run_r53_query_logs(bucket_name='default'):
     """Function that runs the defined R53 Query Logging code"""
     if bucket_name == 'default':
@@ -829,13 +860,19 @@ def run_lb_logs():
     lb_logs(region_list, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def run_guardduty():
-    """Function that runs the defined GuardDuty enablement code"""
-    check_guardduty()
+def run_guardduty(bucket_name='default'):
+    """Function that runs the defined GuardDuty enablement code and exports findings to an S3 bucket"""
+    account_number = sts.get_caller_identity()["Account"]
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    check_guardduty(region_list, account_number, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_wafv2_logs():
-    """Functio that runs the defined WAFv2 Logging code"""
+    """Function that runs the defined WAFv2 Logging code"""
     wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
@@ -843,17 +880,17 @@ def lambda_handler(event, context, bucket_name='default'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
     account_number = sts.get_caller_identity()["Account"]
-    custom_bucket = True
     if bucket_name == 'default':
         bucket_name = create_bucket(unique_end)
-        custom_bucket = False
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
     flow_log_activator(region_list, account_number, bucket_name)
-    check_cloudtrail(account_number, bucket_name, custom_bucket)
+    check_cloudtrail(account_number, bucket_name)
     eks_logging(region_list)
     route_53_query_logs(region_list, account_number, bucket_name)
     s3_logs(region_list, unique_end)
     lb_logs(region_list, unique_end)
-    check_guardduty()
+    check_guardduty(region_list, account_number, bucket_name)
     wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 

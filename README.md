@@ -8,6 +8,8 @@ With Assisted Log Enabler for AWS, logging is turned on automatically for the va
 * Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using AWS Organizations)
 * Amazon S3 Server Access Logs (Single Account and Multi-Account using AWS Organizations)
 * NEW! Elastic Load Balancing Access Logs (Single Account and Multi-Account using AWS Organizations)
+* NEW! GuardDuty Enablement and Export Findings (Single Account and Multi-Account using AWS Organizations)
+* NEW! WAFv2 Logging (Single Account and Multi-Account using AWS Organizations)
 
 Link to related AWS Open Source Blog Post: [Introducing Assisted Log Enabler for AWS](https://aws.amazon.com/blogs/opensource/introducing-assisted-log-enabler-for-aws/)
 
@@ -45,6 +47,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketPolicy",
 "s3:PutLifecycleConfiguration"
 "s3:PutObject",
+"s3:GetObject",
 "s3:CreateBucket",
 "cloudtrail:StartLogging",
 "cloudtrail:CreateTrail",
@@ -72,6 +75,9 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "guardduty:ListDetectors",
 "guardduty:TagResource",
 "guardduty:CreateDetector",
+"guardduty:ListPublishingDestinations",
+"guardduty:CreatePublishingDestination",
+"guardduty:DescribePublishingDestination",
 "wafv2:ListWebACLs",
 "wafv2:ListLoggingConfigurations",
 "wafv2:PutLoggingConfiguration"
@@ -137,10 +143,17 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "elasticloadbalancing:DescribeLoadBalancerAttributes",
 "elasticloadbalancing:ModifyLoadBalancerAttributes"
 
-# For enabling GuardDuty:
+# For enabling GuardDuty and export findings:
 "guardduty:ListDetectors",
 "guardduty:TagResource",
-"guardduty:CreateDetector"
+"guardduty:CreateDetector",
+"guardduty:ListPublishingDestinations",
+"guardduty:CreatePublishingDestination",
+"guardduty:DescribePublishingDestination",
+"s3:GetObject",
+"s3:ListBucket",
+"s3:PutObject",
+"s3:GetBucketLocation"
 
 # For adding WAFv2 logging:
 "wafv2:ListWebACLs",
@@ -219,10 +232,11 @@ usage: assisted_log_enabler.py [-h] [--mode MODE] [--bucket BUCKET]
                                [--exclude_accounts ACCOUNT_NUMBERS] [--all]
                                [--eks] [--vpcflow] [--r53querylogs] [--s3logs]
                                [--lblogs] [--cloudtrail] [--guardduty]
-                               [--single_r53querylogs] [--single_cloudtrail]
-                               [--single_vpcflow] [--single_all]
-                               [--single_s3logs] [--single_lblogs]
-                               [--single_guardduty] [--single_account]
+                               [--wafv2] [--single_r53querylogs]
+                               [--single_cloudtrail] [--single_vpcflow]
+                               [--single_all] [--single_s3logs]
+                               [--single_lblogs] [--single_guardduty]
+                               [--single_wafv2] [--single_account]
                                [--multi_account]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
@@ -239,10 +253,8 @@ optional arguments:
                         want Assisted Log Enabler to store logs in. Otherwise,
                         a new S3 bucket will be created (default). Only used
                         for Amazon VPC Flow Logs, Amazon Route 53 Resolver
-                        Query Logs, and AWS CloudTrail logs. WARNING: For
-                        multi_account, this will replace the bucket policy.
-                        For single_account, this may add statements to the
-                        bucket policy.
+                        Query Logs, AWS CloudTrail logs, and Amazon GuardDuty.
+                        WARNING: This will replace the bucket policy.
   --include_accounts ACCOUNT_NUMBERS
                         Specify a comma separated list of AWS account numbers
                         to INCLUDE for multi_account mode.
@@ -262,7 +274,10 @@ Single & Multi Account Options:
   --lblogs              Turns on Amazon Load Balancer Logs.
   --cloudtrail          Turns on AWS CloudTrail. Only available in Single
                         Account version.
-  --guardduty           Turns on Amazon GuardDuty.
+  --guardduty           Turns on Amazon GuardDuty and exports findings to an
+                        S3 bucket. Will used specified bucket. WARNING: This
+                        creates a KMS Key to export findings.
+  --wafv2               Turns on AWS WAFv2 Logs
 
 Cleanup Options:
   Use these flags to choose which resources you want to turn logging off
@@ -281,8 +296,10 @@ Cleanup Options:
                         Assisted Log Enabler for AWS.
   --single_lblogs       Removes Amazon Load Balancer Log resources created by
                         Assisted Log Enabler for AWS.
-  --single_guardduty    Removes GuardDuty detectors created by Assisted Log
-                        Enabler for AWS.
+  --single_guardduty    Removes Amazon GuardDuty detectors created by Assisted
+                        Log Enabler for AWS.
+  --single_wafv2        Removes AWS WAFv2 Logging Configurations created by
+                        Assisted Log Enabler for AWS.
 
 Dry Run Options:
   Use these flags to run Assisted Log Enabler for AWS in Dry Run mode.
@@ -441,6 +458,10 @@ python3 assisted_log_enabler.py --mode cleanup --single_cloudtrail
 python3 assisted_log_enabler.py --mode cleanup --single_s3logs
 # NEW! To remove Elastic Load Balancing Access logging created by Assisted Log Enabler for AWS (single account):
 python3 assisted_log_enabler.py --mode cleanup --single_lblogs
+# NEW! To remove GuardDuty detectors created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_guardduty
+# NEW! To remove WAFv2 logging created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_wafv2
 ```
 
 ## Shared Responsibility Model
@@ -462,6 +483,8 @@ For answers to cost-related questions involved with this solution, refer to the 
 * Amazon Route 53 Pricing (look for the Route 53 Resolver Query Logs section): [Link](https://aws.amazon.com/route53/pricing/)
 * Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
 * Elastic Load Balancing Logging: [Link](https://aws.amazon.com/elasticloadbalancing/pricing/)
+* GuardDuty Pricing: [Link](https://aws.amazon.com/guardduty/pricing/)
+* WAFv2 Logging Pricing: [Link](https://docs.aws.amazon.com/waf/latest/developerguide/logging-pricing.html)
 
 
 ## Feedback

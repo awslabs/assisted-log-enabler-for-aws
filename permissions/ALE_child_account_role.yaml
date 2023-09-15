@@ -60,6 +60,7 @@ Resources:
               - s3:PutBucketAcl
               - s3:PutBucketPublicAccessBlock
               - s3:PutBucketLifecycleConfiguration
+              - s3:GetObject
               - elb:DescribeLoadBalancers
               - elb:DescribeLoadBalancerAttributes
               - elb:ModifyLoadBalancerAttributes
@@ -74,6 +75,9 @@ Resources:
               - guardduty:ListDetectors
               - guardduty:TagResource
               - guardduty:CreateDetector
+              - guardduty:ListPublishingDestinations
+              - guardduty:CreatePublishingDestination
+              - guardduty:DescribePublishingDestination
               - wafv2:ListWebACLs
               - wafv2:ListLoggingConfigurations
               - wafv2:PutLoggingConfiguration
