@@ -342,6 +342,8 @@ python3 assisted_log_enabler.py --mode single_account --s3logs
 python3 assisted_log_enabler.py --mode single_account --lblogs
 # NEW! For GuardDuty:
 python3 assisted_log_enabler.py --mode single_account --guardduty
+# NEW! For WAFv2 Logs:
+python3 assisted_log_enabler.py --mode single_account --wafv2
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
@@ -405,9 +407,24 @@ python3 assisted_log_enabler.py --mode multi_account --s3logs
 python3 assisted_log_enabler.py --mode multi_account --lblogs
 # NEW! For GuardDuty:
 python3 assisted_log_enabler.py --mode multi_account --guardduty
+# NEW! For WAFv2 Logs:
+python3 assisted_log_enabler.py --mode multi_account --wafv2
 
 ```
 
+### GovCloud Compatibility
+To run Assisted Log Enabler for AWS on GovCloud, make the following adjustments to the code:
+1. Replace `region_list` in with only GovCloud regions (i.e. `region_list = ['us-gov-east-1', 'us-gov-west-1']`) in all files in the subfunctions directory.
+2. Replace all ARNs to use the GovCloud ARN format (Switch `arn:aws` to `arn:aws-us-gov`)
+3. Set LocationConstraint in bucket creation for WAFv2 logging function (`wafv2_logs`) to a GovCloud region, for example:
+```
+s3.create_bucket( 
+   Bucket=bucket_name, 
+   CreateBucketConfiguration={ 
+      "LocationConstraint": "us-gov-east-1" 
+   } 
+)
+```
 
 ### Logging
 A log file containing the detailed output of actions will be placed in the root directory of the Assisted Log Enabler for AWS tool. The format of the file will be ALE_timestamp_here.log
