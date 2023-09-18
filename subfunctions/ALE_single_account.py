@@ -544,6 +544,10 @@ def lb_logs(region_list, unique_end):
                     elb_account='076674570225'
                 elif aws_region == 'sa-east-1':
                     elb_account='507241528517'
+                elif aws_region == 'us-gov-west-1':
+                    elb_account='048591011584'
+                elif aws_region == 'us-gov-east-1':
+                    elb_account='190560391635'
                 logging.info("Checking for AWS Log Account for ELB.")
                 logging.info("PutBucketPolicy API Call")
                 bucket_policy = s3.put_bucket_policy(

@@ -94,6 +94,13 @@ Resources:
                 'iam:AWSServiceName': 'route53resolver.amazonaws.com'
           - Effect: Allow
             Action:
+              - iam:CreateServiceLinkedRole
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/guardduty.amazonaws.com/AWSServiceRoleForAmazonGuardDuty
+            Condition:
+              StringLike:
+                'iam:AWSServiceName': 'guardduty.amazonaws.com'
+          - Effect: Allow
+            Action:
               - route53resolver:ListResolverQueryLogConfigs
               - route53resolver:ListTagsForResource
               - route53resolver:ListResolverQueryLogConfigAssociations
