@@ -6,7 +6,8 @@ With Assisted Log Enabler for AWS, logging is turned on automatically for the va
 * AWS CloudTrail (Single Account Only)
 * Amazon Elastic Kubernetes Service (EKS) Audit and Authenticator Logs (Single Account and Multi-Account using AWS Organizations)
 * Amazon Route 53 Resolver Query Logs (Single Account and Multi-Account using AWS Organizations)
-* NEW! Amazon S3 Server Access Logs (Single Account and Multi-Account using AWS Organizations)
+* Amazon S3 Server Access Logs (Single Account and Multi-Account using AWS Organizations)
+* NEW! Elastic Load Balancing Access Logs (Single Account and Multi-Account using AWS Organizations)
 
 Link to related AWS Open Source Blog Post: [Introducing Assisted Log Enabler for AWS](https://aws.amazon.com/blogs/opensource/introducing-assisted-log-enabler-for-aws/)
 
@@ -22,9 +23,13 @@ The following is a simple diagram on how Assisted Log Enabler for AWS works in a
 
 ![Alt text](diagrams/assisted_log_enabler.png)
 
-NEW! The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Amazon S3 Server Access Logging in a single account:
+The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Amazon S3 Server Access Logging in a single account:
 
 ![Alt text](diagrams/assisted_log_enabler_s3.png)
+
+The following is a simple diagram on how Assisted Log Enabler for AWS works with turning on Elastic Load Balancing Access Logging in a single account:
+
+![Alt text](diagrams/assisted_log_enabler_lb.png)
 
 ## Prerequisites
 ### Permissions
@@ -100,7 +105,7 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "route53resolver:AssociateResolverQueryLogConfig",
 "iam:CreateServiceLinkRole" # This is used to create the AWSServiceRoleForRoute53 Resolver, which is used for creating the Amazon Route 53 Query Logging Configurations.
 
-# NEW! For adding Amazon S3 Server Access Logs:
+# For adding Amazon S3 Server Access Logs:
 "s3:PutBucketLogging",
 "s3:GetBucketLogging",
 "s3:ListBucket",
@@ -110,6 +115,17 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketAcl",
 "s3:PutBucketPublicAccessBlock",
 "s3:PutBucketLifecycleConfiguration"
+
+# NEW! For adding Elastic Load Balancing Access Logs:
+"elb:DescribeLoadBalancers",
+"elb:DescribeLoadBalancerAttributes",
+"elb:ModifyLoadBalancerAttributes",
+"elbv2:DescribeLoadBalancers",
+"elbv2:DescribeLoadBalancerAttributes",
+"elbv2:ModifyLoadBalancerAttributes",
+"elasticloadbalancing:DescribeLoadBalancers",
+"elasticloadbalancing:DescribeLoadBalancerAttributes",
+"elasticloadbalancing:ModifyLoadBalancerAttributes"
 
 # For cleanup of Amazon Route 53 Resolver Query Logs created by Assisted Log Enabler for AWS:
 "route53resolver:ListResolverQueryLogConfigs",
@@ -135,10 +151,12 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * If no trail is configured, one is created and configured to log to the bucket created. (Single Account only as of this release)
 * If Amazon EKS Clusters exist, audit & authenticator logs are turned on.
 * Amazon Route 53 Query Logging is turned on for VPCs that do not have it turned on already.
-* NEW! Amazon S3 Server Access Logs are created for buckets that do not have it turned on already.
+* Amazon S3 Server Access Logs are created for buckets that do not have it turned on already.
    * This does not include for S3 buckets created by Assisted Log Enabler for AWS
    * Amazon S3 Server Access Logs require buckets that reside in the same account & region, so additional buckets for Amazon S3 Server Access logs are created for this.
-
+ * NEW! Elastic Load Balancing Access Logs are created for Application, Network and Classic Load Balancers that do not have it turned on already.
+   * Elastic Load Balancing Access Logs require buckets that reside in the region, so additional buckets for Elastic Load Balancing Access logs are created for this.
+   * The following table contains the account IDs to use in place of elb-account-id in the bucket policy: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
 
 ## Running the Code
 The code in its current form can be ran inside the following:
@@ -177,10 +195,10 @@ No valid option selected. Please run with -h to display valid options.
 ```
 python3 assisted_log_enabler.py -h
 usage: assisted_log_enabler.py [-h] [--mode MODE] [--all] [--eks] [--vpcflow]
-                               [--r53querylogs] [--s3logs] [--cloudtrail]
+                               [--r53querylogs] [--s3logs] [--lblogs] [--cloudtrail]
                                [--single_r53querylogs] [--single_cloudtrail]
                                [--single_vpcflow] [--single_all]
-                               [--single_s3logs] [--single_account]
+                               [--single_s3logs] [--single_lblogs] [--single_account]
                                [--multi_account]
 
 Assisted Log Enabler - Find resources that are not logging, and turn them on.
@@ -203,6 +221,7 @@ Single & Multi Account Options:
   --vpcflow             Turns on Amazon VPC Flow Logs.
   --r53querylogs        Turns on Amazon Route 53 Resolver Query Logs.
   --s3logs              Turns on Amazon Bucket Logs.
+  --lblogs              Turns on Elastic Load Balancing Logs.
   --cloudtrail          Turns on AWS CloudTrail.
 
 Cleanup Options:
@@ -219,6 +238,8 @@ Cleanup Options:
   --single_all          Turns off all of the log types within the Assisted Log
                         Enabler for AWS.
   --single_s3logs       Removes Amazon Bucket Log resources created by
+                        Assisted Log Enabler for AWS.
+  --single_lblogs       Removes Elastic Load Balancing Log resources created by
                         Assisted Log Enabler for AWS.
 
 Dry Run Options:
@@ -256,8 +277,10 @@ python3 assisted_log_enabler.py --mode single_account --vpcflow
 python3 assisted_log_enabler.py --mode single_account --r53querylogs
 # For AWS CloudTrail:
 python3 assisted_log_enabler.py --mode single_account --cloudtrail
-# NEW! For Amazon S3 Server Access Logs:
+# For Amazon S3 Server Access Logs:
 python3 assisted_log_enabler.py --mode single_account --s3logs
+# NEW! For Elastic Load Balancing Access Logs:
+python3 assisted_log_enabler.py --mode single_account --lblogs
 ```
 
 ### Step-by-Step Instructions (for running in AWS CloudShell, multi account mode)
@@ -315,8 +338,10 @@ python3 assisted_log_enabler.py --mode multi_account --eks
 python3 assisted_log_enabler.py --mode multi_account --vpcflow
 # For Amazon Route 53 Resolver Query Logs:
 python3 assisted_log_enabler.py --mode multi_account --r53querylogs
-# NEW! For Amazon S3 Server Access Logs:
+For Amazon S3 Server Access Logs:
 python3 assisted_log_enabler.py --mode multi_account --s3logs
+# NEW! For Elastic Load Balancing Access Logs:
+python3 assisted_log_enabler.py --mode multi_account --lblogs
 
 ```
 
@@ -341,7 +366,7 @@ Sample output within the log file:
 2021-02-23 05:31:54,984 - INFO - Turning on audit and authenticator logging for EKS clusters in region af-south-1.
 ```
 
-## NEW! Dry Run Mode
+## Dry Run Mode
 Dry Run modes for single and multi-account are both available. These modes allow you to check for resources in your environment that do not have logging turned on, but does not activate the logging for said resources.
 
 To run Assisted Log Enabler for AWS in Dry Run mode, you can use the commands below:
@@ -366,8 +391,10 @@ python3 assisted_log_enabler.py --mode cleanup --single_r53querylogs
 python3 assisted_log_enabler.py --mode cleanup --single_vpcflow
 # To remove AWS CloudTrail trails created by Assisted Log Enabler for AWS (single account):
 python3 assisted_log_enabler.py --mode cleanup --single_cloudtrail
-# NEW! To remove Amazon S3 Server Access logging created by Assisted Log Enabler for AWS (single account):
+# To remove Amazon S3 Server Access logging created by Assisted Log Enabler for AWS (single account):
 python3 assisted_log_enabler.py --mode cleanup --single_s3logs
+# NEW! To remove Elastic Load Balancing Access logging created by Assisted Log Enabler for AWS (single account):
+python3 assisted_log_enabler.py --mode cleanup --single_lblogs
 ```
 
 ## Shared Responsibility Model
@@ -388,6 +415,7 @@ For answers to cost-related questions involved with this solution, refer to the 
 * Amazon VPC Flow Logs Pricing: [Link](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-pricing)
 * Amazon Route 53 Pricing (look for the Route 53 Resolver Query Logs section): [Link](https://aws.amazon.com/route53/pricing/)
 * Amazon EKS Control Plane Logging: [Link](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+* Elastic Load Balancing Logging: [Link](https://aws.amazon.com/elasticloadbalancing/pricing/)
 
 
 ## Feedback

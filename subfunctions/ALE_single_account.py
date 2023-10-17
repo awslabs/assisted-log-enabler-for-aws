@@ -167,7 +167,7 @@ def check_cloudtrail(account_number, unique_end):
         cloudtrail_status = cloudtrail.describe_trails(
             includeShadowTrails=True
         )
-        if cloudtrail_status["trailList"][0]["Name"] == "":
+        if cloudtrail_status["trailList"] == []:
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
                 Name='assisted-log-enabler-ct-' + account_number,
@@ -297,10 +297,11 @@ def route_53_query_logs(region_list, account_number, unique_end):
             logging.error(exception_handle)
 
 # 6. Turn on S3 Logging.
-def s3_logs(region_list, account_number, unique_end):
+def s3_logs(region_list, unique_end):
     """Function to turn on S3 Logs for Buckets"""
     for aws_region in region_list:
         logging.info("Checking for S3 Logging on for Buckets in region " + aws_region + ".")
+        account_number = sts.get_caller_identity()["Account"]
         s3 = boto3.client('s3', region_name=aws_region)
         try:
             S3List: list = []
@@ -413,6 +414,190 @@ def s3_logs(region_list, account_number, unique_end):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+# 7. Turn on Load Balancer Logging.
+def lb_logs(region_list, unique_end):
+    """Function to turn on LB Logs"""
+    for aws_region in region_list:
+        elbv1client = boto3.client('elb', region_name=aws_region)
+        elbv2client = boto3.client('elbv2', region_name=aws_region)
+        account_number = sts.get_caller_identity()["Account"]
+        logging.info("Checking for Load Balancer Logging in the account " + account_number + ", region " + aws_region)
+        try:
+            ELBList1: list = []
+            ELBList2: list = []
+            ELBLogList: list = []
+            ELBv1LogList: list = []
+            ELBv2LogList: list = []
+            logging.info("DescribeLoadBalancers API Call")
+            ELBList1 = elbv1client.describe_load_balancers()
+            for lb in ELBList1['LoadBalancerDescriptions']:
+                logging.info("DescribeLoadBalancerAttibute API Call")
+                lblog=elbv1client.describe_load_balancer_attributes(LoadBalancerName=lb['LoadBalancerName'])
+                logging.info("Parsing out for ELB Access Logging")
+                if lblog['LoadBalancerAttributes']['AccessLog']['Enabled'] == False:
+                    ELBv1LogList.append([lb['LoadBalancerName'],'classic'])
+            logging.info("DescribeLoadBalancers v2 API Call")
+            ELBList2 = elbv2client.describe_load_balancers()
+            for lb in ELBList2['LoadBalancers']:
+                logging.info("DescribeLoadBalancerAttibute v2 API Call")
+                lblog=elbv2client.describe_load_balancer_attributes(LoadBalancerArn=lb['LoadBalancerArn'])
+                logging.info("Parsing out for ELBv2 Access Logging")
+                for lbtemp in lblog['Attributes']:
+                    if lbtemp['Key'] == 'access_logs.s3.enabled':
+                        if lbtemp['Value'] == 'false':
+                            ELBv2LogList.append([lb['LoadBalancerName'],lb['LoadBalancerArn']])
+            ELBLogList=ELBv1LogList+ELBv2LogList      
+            if ELBLogList != []:
+                logging.info("List of Load Balancers found within account " + account_number + ", region " + aws_region + " without logging enabled:")
+                print(ELBLogList)
+                for elb in ELBLogList:
+                    logging.info(elb[0] + " does not have Load Balancer logging on. It will be turned on within this function.")
+                logging.info("Creating S3 Logging Bucket for Load Balancers")
+                """Function to create the bucket for storing load balancer logs"""
+                account_number = sts.get_caller_identity()["Account"]
+                logging.info("Creating bucket in %s" % account_number)
+                logging.info("CreateBucket API Call")
+                if aws_region == 'us-east-1':
+                    logging_bucket_dict = s3.create_bucket(
+                        Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
+                    )
+                else:
+                    logging_bucket_dict = s3.create_bucket(
+                        Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                        CreateBucketConfiguration={
+                            'LocationConstraint': aws_region
+                        }
+                    )
+                logging.info("Bucket " + "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end + " Created.")
+                logging.info("Setting lifecycle policy.")
+                logging.info("PutBucketLifecycleConfiguration API Call")
+                lifecycle_policy = s3.put_bucket_lifecycle_configuration(
+                    Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                    LifecycleConfiguration={
+                        'Rules': [
+                            {
+                                'Expiration': {
+                                    'Days': 365
+                                },
+                                'Status': 'Enabled',
+                                'Prefix': '',
+                                'ID': 'LogStorage',
+                                'Transitions': [
+                                    {
+                                        'Days': 90,
+                                        'StorageClass': 'INTELLIGENT_TIERING'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                )
+                logging.info("Lifecycle Policy successfully set.")
+                logging.info("Checking for AWS Log Account for ELB.")
+                logging.info("https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html")
+                if aws_region == 'us-east-1':
+                    elb_account='127311923021'
+                elif aws_region == 'us-east-2':
+                    elb_account='033677994240'
+                elif aws_region == 'us-west-1':
+                    elb_account='027434742980'
+                elif aws_region == 'us-west-2':
+                    elb_account='797873946194'
+                elif aws_region == 'af-south-1':
+                    elb_account='098369216593'
+                elif aws_region == 'ca-central-1':
+                    elb_account='985666609251'
+                elif aws_region == 'eu-central-1':
+                    elb_account='054676820928'
+                elif aws_region == 'eu-west-1':
+                    elb_account='156460612806'
+                elif aws_region == 'eu-west-2':
+                    elb_account='652711504416'
+                elif aws_region == 'eu-south-1':
+                    elb_account='635631232127'
+                elif aws_region == 'eu-west-3':
+                    elb_account='009996457667'
+                elif aws_region == 'eu-north-1':
+                    elb_account='897822967062'
+                elif aws_region == 'ap-east-1':
+                    elb_account='754344448648'
+                elif aws_region == 'ap-northeast-1':
+                    elb_account='582318560864'
+                elif aws_region == 'ap-northeast-2':
+                    elb_account='600734575887'
+                elif aws_region == 'ap-northeast-3':
+                    elb_account='383597477331'
+                elif aws_region == 'ap-southeast-1':
+                    elb_account='114774131450'
+                elif aws_region == 'ap-southeast-2':
+                    elb_account='783225319266'
+                elif aws_region == 'ap-south-1':
+                    elb_account='718504428378'
+                elif aws_region == 'me-south-1':
+                    elb_account='076674570225'
+                elif aws_region == 'sa-east-1':
+                    elb_account='507241528517'
+                logging.info("Checking for AWS Log Account for ELB.")
+                logging.info("PutBucketPolicy API Call")
+                bucket_policy = s3.put_bucket_policy(
+                    Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                    Policy='{"Version": "2012-10-17", "Statement": [{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '"},{"Effect": "Allow","Principal": {"Service": "delivery.logs.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}},{"Effect": "Allow","Principal": {"AWS": "arn:aws:iam::' + elb_account + ':root"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-lb-log-collection-' + account_number + '-' + aws_region + '-' + unique_end + '/*"}]}'
+                )
+                logging.info("Setting the S3 bucket Public Access to Blocked")
+                logging.info("PutPublicAccessBlock API Call")
+                bucket_private = s3.put_public_access_block(
+                    Bucket="aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                    PublicAccessBlockConfiguration={
+                        'BlockPublicAcls': True,
+                        'IgnorePublicAcls': True,
+                        'BlockPublicPolicy': True,
+                        'RestrictPublicBuckets': True
+                    },
+                )
+                if ELBv1LogList != []:
+                    for elb in ELBv1LogList:
+                        logging.info("Activating logs for Load Balancer " + elb[0])
+                        logging.info("ModifyLoadBalancerAttributes API Call")
+                        create_lb_log = elbv1client.modify_load_balancer_attributes(
+                            LoadBalancerName=elb[0],
+                            LoadBalancerAttributes={
+                                'AccessLog': {
+                                    'Enabled': True,
+                                    'S3BucketName': "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end,
+                                    'EmitInterval': 5,
+                                    'S3BucketPrefix': elb[0]
+                                }
+                            }
+                        )
+                        logging.info("Logging Enabled for Load Balancer " + elb[0])
+                if ELBv2LogList != []:
+                    for elb in ELBv2LogList:
+                        logging.info("Activating logs for Load Balancer " + elb[0])
+                        logging.info("ModifyLoadBalancerAttributes v2 API Call")
+                        create_lb_log = elbv2client.modify_load_balancer_attributes(
+                            LoadBalancerArn=elb[1],
+                            Attributes=[
+                                {
+                                    'Key': 'access_logs.s3.enabled',
+                                    'Value': 'true'
+                                },
+                                {
+                                    'Key': 'access_logs.s3.bucket',
+                                    'Value': "aws-lb-log-collection-" + account_number + "-" + aws_region + "-" + unique_end
+                                },
+                                {
+                                    'Key': 'access_logs.s3.prefix',
+                                    'Value': elb[0]
+                                }
+                            ]
+                        )
+                        logging.info("Logging Enabled for Load Balancer " + elb[0])
+            else: 
+                logging.info("There are no Load Balancers to be set by Log Enabler in " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+
 def run_eks():
     """Function that runs the defined EKS logging code"""
     eks_logging(region_list)
@@ -445,10 +630,14 @@ def run_r53_query_logs():
 def run_s3_logs():
     """Function that runs the defined S3 Logging code"""
     unique_end = random_string_generator()
-    account_number = create_bucket(unique_end)
-    s3_logs(region_list, account_number, unique_end)
+    s3_logs(region_list, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_lb_logs():
+    """Function that runs the defined Load Balancer Logging code"""
+    unique_end = random_string_generator()
+    lb_logs(region_list, unique_end)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
@@ -458,7 +647,8 @@ def lambda_handler(event, context):
     check_cloudtrail(account_number, unique_end)
     eks_logging(region_list)
     route_53_query_logs(region_list, account_number, unique_end)
-    s3_logs(region_list, account_number, unique_end)
+    s3_logs(region_list, unique_end)
+    lb_logs(region_list, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
