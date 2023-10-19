@@ -176,7 +176,6 @@ def check_cloudtrail(account_number, bucket_name):
             includeShadowTrails=True
         )
         if cloudtrail_status["trailList"] == []:
-        if cloudtrail_status["trailList"] == []:
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
                 Name='assisted-log-enabler-ct-' + account_number,
