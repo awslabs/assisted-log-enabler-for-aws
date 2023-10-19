@@ -15,7 +15,6 @@ from datetime import timezone
 
 import sys,subprocess
 subprocess.check_call([sys.executable, '-m', 'pip', 'install','coloredlogs'])
-import coloredlogs
 
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
@@ -23,6 +22,7 @@ from subfunctions import ALE_cleanup_single
 from subfunctions import ALE_dryrun_single
 from subfunctions import ALE_dryrun_multi
 
+import coloredlogs
 
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
