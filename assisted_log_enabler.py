@@ -1,7 +1,6 @@
 #// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #// SPDX-License-Identifier: Apache-2.0
 # Assisted Log Enabler for AWS - Find resources that are not logging, and turn them on.
-# Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
 
 import logging
 import os
@@ -13,6 +12,7 @@ import datetime
 import argparse
 from botocore.exceptions import ClientError
 from datetime import timezone
+import coloredlogs
 
 import sys,subprocess
 subprocess.check_call([sys.executable, '-m', 'pip', 'install','coloredlogs'])
@@ -23,18 +23,16 @@ from subfunctions import ALE_cleanup_single
 from subfunctions import ALE_dryrun_single
 from subfunctions import ALE_dryrun_multi
 
+
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
 timestamp_date = datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d-%H%M%S")
 timestamp_date_string = str(timestamp_date)
 
-import coloredlogs
-coloredlogs.install()
-
 logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(format=logFormatter, level=logging.INFO)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+coloredlogs.install(fmt=logFormatter, logger=logger)
 output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
 output_handle.setLevel(logging.INFO)
 logger.addHandler(output_handle)
@@ -64,8 +62,9 @@ def banner():
 █████   ██ ██  ██ ███████ ██████  ██      █████   ██████    
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
-         Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
-         Twitter: @jdubm31
+         Joshua "DozerCat" McKiddy - Customer Incident Response Team (AWS) -  Twitter: @jdubm31
+         Cydney "StudyCat" Stude - Customer Incident Response Team (AWS) - Twitter: @cydneystude
+         Andrew Yankowsky - Professional Services (AWS) 
          Type -h for help.
     ''')
 
