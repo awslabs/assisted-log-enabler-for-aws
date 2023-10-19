@@ -160,6 +160,7 @@ def flow_log_activator(region_list, account_number, bucket_name):
                     }
                 ]
             )
+            # Custom format specified in same order as documentation lists them at https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
             logging.info("VPC Flow Logs are turned on.")
         except Exception as exception_handle:
             logging.error(exception_handle)
@@ -174,6 +175,7 @@ def check_cloudtrail(account_number, bucket_name):
         cloudtrail_status = cloudtrail.describe_trails(
             includeShadowTrails=True
         )
+        if cloudtrail_status["trailList"] == []:
         if cloudtrail_status["trailList"] == []:
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
