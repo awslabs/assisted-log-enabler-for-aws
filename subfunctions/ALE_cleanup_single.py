@@ -300,17 +300,85 @@ def lb_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+
+def guardduty_cleanup():
+    """"Function to cleanup GuardDuty detectors"""
+    logging.info("Cleaning up GuardDuty detectors created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        detector_list = []
+        removal_list = []
+        guardduty = boto3.client('guardduty', region_name=aws_region)
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Cleaning up GuardDuty detectors created by Assisted Log Enabler for AWS in region " + aws_region + ".")
+            logging.info("ListDetectors API Call")
+            detector_list = guardduty.list_detectors()["DetectorIds"]
+            if detector_list != []:
+                logging.info("GuardDuty detectors found: ")
+                print(detector_list)
+                logging.info("Checking tags for GuardDuty detectors created by Assisted Log Enabler.")
+                for detector_id in detector_list:
+                    logging.info("GetDetector API Call")
+                    detector = guardduty.get_detector(DetectorId=detector_id)
+                    for tag in detector["Tags"]:
+                        if tag == "workflow":
+                            if detector["Tags"]["workflow"] == "assisted-log-enabler":
+                                removal_list.append(detector_id)
+                if removal_list != []:
+                    logging.info("GuardDuty detectors created by Assisted Log Enabler to be deleted: ")
+                    print(removal_list)
+                    for detector_id in removal_list:
+                        logging.info("Removing GuardDuty detector " + detector_id)
+                        logging.info("DeleteDetector API Call")
+                        guardduty.delete_detector(DetectorId=detector_id)
+                else:
+                    logging.info("There are no GuardDuty detectors created by Assisted Log Enabler in region " +  aws_region + ".")
+            else:
+                logging.info("No GuardDuty detectors enabled in region " + aws_region + ".")
+
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+def waf_cleanup():
+    """Function to cleanup WAFv2 Logging Configurations"""
+    logging.info("Cleaning up WAFv2 logging previously enabled by Assisted Log Enabler.")
+
+    for aws_region in region_list:
+        wafv2 = boto3.client('wafv2', region_name=aws_region)
+        try:
+            logging.info("Checking Web ACL logging configurations in region " + aws_region + ".")
+            logging.info("ListLoggingConfigurations API Call")
+            log_configs_regional = wafv2.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+            for acl in log_configs_regional:
+                for destination in acl["LogDestinationConfigs"]:
+                    if "aws-waf-logs-ale-" in destination:
+                        logging.info("Deleting logging configuration for " + acl["ResourceArn"])
+                        logging.info("DeleteLoggingConfiguration API Call")
+                        wafv2.delete_logging_configuration(ResourceArn=acl["ResourceArn"])
+
+            if aws_region == 'us-east-1':
+                logging.info("Checking Global Web ACL logging configurations.")
+                logging.info("ListLoggingConfigurations API Call")
+                log_configs_cf = wafv2.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                for acl in log_configs_cf:
+                    for destination in acl["LogDestinationConfigs"]:
+                        if "aws-waf-logs-ale-" in destination:
+                            logging.info("Deleting logging configuration for " + acl["ResourceArn"])
+                            logging.info("DeleteLoggingConfiguration API Call")
+                            wafv2.delete_logging_configuration(ResourceArn=acl["ResourceArn"])
+        
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
     vpcflow_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
-
 def run_cloudtrail_cleanup():
     """Function to run the cloudtrail_cleanup function"""
     cloudtrail_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
-
 
 def run_r53_cleanup():
     """Function to run the r53_cleanup function"""
@@ -327,6 +395,16 @@ def run_lb_cleanup():
     lb_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_guardduty_cleanup():
+    """Function to run the guardduty_cleanup function"""
+    guardduty_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
+def run_wafv2_cleanup():
+    """Function to run the wafv2_cleanup function"""
+    waf_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     r53_cleanup()
@@ -334,6 +412,8 @@ def lambda_handler(event, context):
     cloudtrail_cleanup()
     s3_cleanup()
     lb_cleanup()
+    guardduty_cleanup()
+    waf_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 

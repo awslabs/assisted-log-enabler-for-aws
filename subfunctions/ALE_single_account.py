@@ -29,7 +29,6 @@ region = os.environ['AWS_REGION']
 
 region_list = ['af-south-1', 'ap-east-1', 'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-south-1', 'me-south-1', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
 
-
 # 0. Define random string for S3 Bucket Name
 def random_string_generator():
     lower_letters = string.ascii_lowercase
@@ -45,13 +44,14 @@ def create_bucket(unique_end):
         account_number = sts.get_caller_identity()["Account"]
         logging.info("Creating bucket in %s" % account_number)
         logging.info("CreateBucket API Call")
+        bucket_name = "aws-log-collection-" + account_number + "-" + region + "-" + unique_end
         if region == 'us-east-1':
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end
+                Bucket=bucket_name
             )
         else:
             logging_bucket_dict = s3.create_bucket(
-                Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+                Bucket=bucket_name,
                 CreateBucketConfiguration={
                     'LocationConstraint': region
                 }
@@ -60,7 +60,7 @@ def create_bucket(unique_end):
         logging.info("Setting lifecycle policy.")
         logging.info("PutBucketLifecycleConfiguration API Call")
         lifecycle_policy = s3.put_bucket_lifecycle_configuration(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             LifecycleConfiguration={
                 'Rules': [
                     {
@@ -83,17 +83,17 @@ def create_bucket(unique_end):
         logging.info("Lifecycle Policy successfully set.")
         logging.info("PutObject API Call")
         create_ct_path = s3.put_object(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             Key='cloudtrail/AWSLogs/' + account_number + '/')
         logging.info("PutBucketPolicy API Call")
         bucket_policy = s3.put_bucket_policy(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
-            Policy='{"Version": "2012-10-17", "Statement": [{"Sid": "AWSCloudTrailAclCheck20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:GetBucketAcl","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '"},{"Sid": "AWSCloudTrailWrite20150319","Effect": "Allow","Principal": {"Service": "cloudtrail.amazonaws.com"},"Action": "s3:PutObject","Resource": "arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/cloudtrail/AWSLogs/' + account_number + '/*","Condition": {"StringEquals": {"s3:x-amz-acl": "bucket-owner-full-control"}}}]}'
+            Bucket=bucket_name,
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow PutObject", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*" }, { "Sid": "Allow GetBucketLocation", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:GetBucketLocation", "Resource": "arn:aws:s3:::' + bucket_name + '" } ] }'
         )
         logging.info("Setting the S3 bucket Public Access to Blocked")
         logging.info("PutPublicAccessBlock API Call")
         bucket_private = s3.put_public_access_block(
-            Bucket="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+            Bucket=bucket_name,
             PublicAccessBlockConfiguration={
                 'BlockPublicAcls': True,
                 'IgnorePublicAcls': True,
@@ -103,11 +103,19 @@ def create_bucket(unique_end):
         )
     except Exception as exception_handle:
         logging.error(exception_handle)
-    return account_number
+    return bucket_name
 
+# If custom bucket is supplied, update the bucket policy
+def update_custom_bucket_policy(bucket_name, account_number):
+    logging.info("Pre-existing S3 bucket specified. Updating bucket policy.")
+    logging.info("PutBucketPolicy API Call")
+    s3.put_bucket_policy(
+            Bucket=bucket_name,
+            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSCloudTrailAclCheck20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSCloudTrailWrite20150319", "Effect": "Allow", "Principal": { "Service": "cloudtrail.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/cloudtrail/AWSLogs/' + account_number + '/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryAclCheck", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:GetBucketAcl", "Resource": "arn:aws:s3:::' + bucket_name + '" }, { "Sid": "AWSLogDeliveryWriteVPC", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/vpcflowlogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "AWSLogDeliveryWriteR53", "Effect": "Allow", "Principal": { "Service": "delivery.logs.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/r53querylogs/*", "Condition": { "StringEquals": { "s3:x-amz-acl": "bucket-owner-full-control" } } }, { "Sid": "Deny non-HTTPS access", "Effect": "Deny", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:*", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*", "Condition": { "Bool": { "aws:SecureTransport": "false" } } }, { "Sid": "Allow PutObject", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/guardduty/*" }, { "Sid": "Allow GetBucketLocation", "Effect": "Allow", "Principal": { "Service": "guardduty.amazonaws.com" }, "Action": "s3:GetBucketLocation", "Resource": "arn:aws:s3:::' + bucket_name + '" } ] }'
+        )
 
 # 2. Find VPCs and turn flow logs on if not on already.
-def flow_log_activator(region_list, account_number, unique_end):
+def flow_log_activator(region_list, account_number, bucket_name):
     """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
     for aws_region in region_list:
         ec2 = boto3.client('ec2', region_name=aws_region)
@@ -138,8 +146,8 @@ def flow_log_activator(region_list, account_number, unique_end):
                 ResourceType='VPC',
                 TrafficType='ALL',
                 LogDestinationType='s3',
-                LogDestination='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/vpcflowlogs',
-                LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${subnet-id} ${instance-id} ${tcp-flags} ${type} ${pkt-srcaddr} ${pkt-dstaddr} ${region} ${az-id} ${sublocation-type} ${sublocation-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}',
+                LogDestination='arn:aws:s3:::' + bucket_name + '/vpcflowlogs',
+                LogFormat='${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status} ${vpc-id} ${type} ${tcp-flags} ${subnet-id} ${sublocation-type} ${sublocation-id} ${region} ${pkt-srcaddr} ${pkt-dstaddr} ${instance-id} ${az-id} ${pkt-src-aws-service} ${pkt-dst-aws-service} ${flow-direction} ${traffic-path}',
                 TagSpecifications=[
                     {
                         'ResourceType': 'vpc-flow-log',
@@ -159,7 +167,7 @@ def flow_log_activator(region_list, account_number, unique_end):
 
 
 # 3. Check to see if a CloudTrail trail is configured, and turn it on if it is not.
-def check_cloudtrail(account_number, unique_end):
+def check_cloudtrail(account_number, bucket_name):
     """Function to check if CloudTrail is enabled"""
     logging.info("Checking to see if CloudTrail is on, and will activate if needed.")
     try:
@@ -171,7 +179,7 @@ def check_cloudtrail(account_number, unique_end):
             logging.info("CreateTrail API Call")
             cloudtrail_activate = cloudtrail.create_trail(
                 Name='assisted-log-enabler-ct-' + account_number,
-                S3BucketName="aws-log-collection-" + account_number + "-" + region + "-" + unique_end,
+                S3BucketName=bucket_name,
                 S3KeyPrefix='cloudtrail',
                 IsMultiRegionTrail=True,
                 EnableLogFileValidation=True
@@ -247,7 +255,7 @@ def eks_logging(region_list):
 
 
 # 5. Turn on Route 53 Query Logging.
-def route_53_query_logs(region_list, account_number, unique_end):
+def route_53_query_logs(region_list, account_number, bucket_name):
     """Function to turn on Route 53 Query Logs for VPCs"""
     for aws_region in region_list:
         logging.info("Turning on Route 53 Query Logging on for VPCs in region " + aws_region + ".")
@@ -275,7 +283,7 @@ def route_53_query_logs(region_list, account_number, unique_end):
             logging.info("CreateResolverQueryLogConfig API Call")
             create_query_log = route53resolver.create_resolver_query_log_config(
                 Name='Assisted_Log_Enabler_Query_Logs_' + aws_region,
-                DestinationArn='arn:aws:s3:::aws-log-collection-' + account_number + '-' + region + '-' + unique_end + '/r53querylogs',
+                DestinationArn='arn:aws:s3:::' + bucket_name + '/r53querylogs',
                 CreatorRequestId=timestamp_date_string,
                 Tags=[
                     {
@@ -537,6 +545,10 @@ def lb_logs(region_list, unique_end):
                     elb_account='076674570225'
                 elif aws_region == 'sa-east-1':
                     elb_account='507241528517'
+                elif aws_region == 'us-gov-west-1':
+                    elb_account='048591011584'
+                elif aws_region == 'us-gov-east-1':
+                    elb_account='190560391635'
                 logging.info("Checking for AWS Log Account for ELB.")
                 logging.info("PutBucketPolicy API Call")
                 bucket_policy = s3.put_bucket_policy(
@@ -597,34 +609,248 @@ def lb_logs(region_list, unique_end):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def check_guardduty(region_list, account_number, bucket_name):
+    """Function to turn on GuardDuty and export findings to an S3 bucket."""
+
+    logging.info("Creating KMS key for GuardDuty to export findings.")
+    kms = boto3.client('kms')
+    logging.info("CreateKey API Call")
+    export_key = kms.create_key(
+        Policy="{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"AWS\": \"arn:aws:iam::" + account_number + ":root\" }, \"Action\": \"kms:*\", \"Resource\": \"*\" }, { \"Sid\": \"Allow GuardDuty to use the key\", \"Effect\": \"Allow\", \"Principal\": { \"Service\": \"guardduty.amazonaws.com\" }, \"Action\": \"kms:GenerateDataKey\", \"Resource\": \"*\" } ] }",
+        KeyUsage="ENCRYPT_DECRYPT",
+        KeySpec="SYMMETRIC_DEFAULT",
+        Origin="AWS_KMS",
+        MultiRegion=False
+    )
+    key_arn = export_key["KeyMetadata"]["Arn"]
+    logging.info("Created KMS Key " + key_arn)
+    key_alias = "alias/ale-guardduty-key-" + random_string_generator()
+    logging.info("CreateAlias API Call")
+    kms.create_alias(
+        AliasName=key_alias,
+        TargetKeyId=key_arn
+    )
+    logging.info("Created KMS Key Alias " + key_alias)
+
+    logging.info("Creating /guardduty folder in S3 Bucket")
+    logging.info("PutObject API Call")
+    s3.put_object(
+        Bucket=bucket_name,
+        Key="guardduty/"
+    )
+
+    for aws_region in region_list:
+        guardduty = boto3.client('guardduty', region_name=aws_region)
+        logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
+        try:
+            logging.info("ListDetectors API Call")
+            detectors = guardduty.list_detectors()
+            if detectors["DetectorIds"] == []:
+                logging.info("GuardDuty is not enabled in the account " + account_number + ", region " + aws_region)
+                logging.info("Enabling GuardDuty")
+                logging.info("CreateDetector API Call")
+                new_detector = guardduty.create_detector(
+                    Enable=True, 
+                    DataSources={
+                        'S3Logs': {
+                            'Enable': True
+                        },
+                        'Kubernetes': {
+                            'AuditLogs': {
+                                'Enable': True
+                            }
+                        }
+                    },
+                    Tags={
+                        'workflow': 'assisted-log-enabler'
+                    }
+                    )
+                logging.info("Created GuardDuty detector ID " + new_detector["DetectorId"])
+
+                logging.info("Exporting GuardDuty findings to an S3 bucket.")
+                logging.info("Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                logging.info("CreatePublishingDestination API Call")
+                guardduty.create_publishing_destination(
+                    DetectorId=new_detector["DetectorId"],
+                    DestinationType="S3",
+                    DestinationProperties={
+                        "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                        "KmsKeyArn": key_arn
+                    }
+                )
+            else:
+                logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+                detector_id = detectors["DetectorIds"][0]
+                logging.info("Checking if GuardDuty detector publishes findings to S3.")
+                logging.info("ListPublishingDestinations API Call")
+                gd_destinations = guardduty.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
+                if gd_destinations == []:
+                    logging.info("Detector does not publish findings to a destination. Setting S3 Bucket " + bucket_name + " as publishing destination for GuardDuty detector.")
+                    logging.info("CreatePublishingDestination API Call")
+                    guardduty.create_publishing_destination(
+                        DetectorId=detector_id,
+                        DestinationType="S3",
+                        DestinationProperties={
+                            "DestinationArn": "arn:aws:s3:::" + bucket_name + "/guardduty",
+                            "KmsKeyArn": key_arn
+                        }
+                    )
+                else:
+                    for dest in gd_destinations:
+                        if dest["DestinationType"] == "S3":
+                            dest_id = dest["DestinationId"]
+                            logging.info("DescribePublishingDestination API Call")
+                            dest_info = guardduty.describe_publishing_destination(
+                                DetectorId=detector_id,
+                                DestinationId=dest_id
+                            )
+                            dest_s3_arn = dest_info["DestinationProperties"]["DestinationArn"]
+                            logging.info("Detector already publishes findings to S3 bucket " + dest_s3_arn.split(":")[-1])
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+def wafv2_logs():
+    """Function to turn on WAFv2 Logging"""
+    account_number = sts.get_caller_identity()["Account"]
+    bucket_arn = ""
+    for aws_region in region_list:
+        wafv2 = boto3.client('wafv2', region_name=aws_region)
+        logging.info("Checking for WAFv2 Logging in the account " + account_number + ", region " + aws_region)
+        try:
+            WAFv2List: list = [] # list of all WAFv2 ARNs
+            WAFv2LogList: list = [] # list of WAFv2 ARNs with logging enabled
+            WAFv2NoLogList: list = [] # list of WAFv2 ARNs to enable logging
+
+            # Get regional WAFv2 Web ACLs
+            logging.info("ListWebAcls API Call")
+            wafv2_regional_acl_list = wafv2.list_web_acls(Scope='REGIONAL')["WebACLs"]
+            for acl in wafv2_regional_acl_list:
+                WAFv2List.append(acl["ARN"])
+            
+            if aws_region == 'us-east-1':
+                # Get CloudFront (global) WAFv2 Web ACLs
+                logging.info("Checking for Global (CloudFront) Web ACLs")
+                logging.info("ListWebAcls API Call")
+                wafv2_cf_acl_list = wafv2.list_web_acls(Scope='CLOUDFRONT')["WebACLs"]
+                for acl in wafv2_cf_acl_list:
+                    WAFv2List.append(acl["ARN"])
+            
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + ":")
+            print(WAFv2List)
+
+            logging.info("ListLoggingConfigurations API Call")
+            wafv2_regional_log_configs = wafv2.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+            for acl in wafv2_regional_log_configs:
+                WAFv2LogList.append(acl["ResourceArn"])
+            
+            if aws_region == 'us-east-1':
+                logging.info("Checking Global (CloudFront) Web ACL Logging Configurations")
+                logging.info("ListLoggingConfigurations API Call")
+                wafv2_cf_log_configs = wafv2.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                for acl in wafv2_cf_log_configs:
+                    WAFv2LogList.append(acl["ResourceArn"])
+            
+            WAFv2NoLogList = list(set(WAFv2List) - set(WAFv2LogList))
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + " WITHOUT logging enabled:")
+            print(WAFv2NoLogList)
+
+            # If an S3 bucket hasn't been created yet, create one
+            if WAFv2NoLogList != [] and bucket_arn == "":
+                logging.info("Creating S3 bucket for WAF logs enabled by Assisted Log Enabler.")
+                unique_end = random_string_generator()
+                bucket_name = "aws-waf-logs-ale-" + account_number + "-" + unique_end
+                logging.info("CreateBucket API Call")
+                s3.create_bucket(Bucket=bucket_name)
+                logging.info("Bucket " + bucket_name + " created.")
+                bucket_arn = "arn:aws:s3:::" + bucket_name
+                
+                logging.info("Setting lifecycle policy.")
+                logging.info("PutBucketLifecycleConfiguration API Call")
+                s3.put_bucket_lifecycle_configuration(
+                    Bucket=bucket_name,
+                    LifecycleConfiguration={
+                        'Rules': [
+                            {
+                                'Expiration': {
+                                    'Days': 365
+                                },
+                                'Status': 'Enabled',
+                                'Prefix': '',
+                                'ID': 'LogStorage',
+                                'Transitions': [
+                                    {
+                                        'Days': 90,
+                                        'StorageClass': 'INTELLIGENT_TIERING'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                )
+                logging.info("Setting the S3 bucket Public Access to Blocked")
+                logging.info("PutPublicAccessBlock API Call")
+                bucket_private = s3.put_public_access_block(
+                    Bucket=bucket_name,
+                    PublicAccessBlockConfiguration={
+                        'BlockPublicAcls': True,
+                        'IgnorePublicAcls': True,
+                        'BlockPublicPolicy': True,
+                        'RestrictPublicBuckets': True
+                    },
+                )
+            
+            # If an S3 bucket has been created, use it as the log destination
+            if WAFv2NoLogList != [] and bucket_arn != "":
+                for arn in WAFv2NoLogList:
+                    logging.info(arn + " does not have logging turned on. Turning on logging.")
+                    logging.info("PutLoggingConfiguration API Call")
+                    wafv2.put_logging_configuration(
+                        LoggingConfiguration={
+                            'ResourceArn': arn,
+                            'LogDestinationConfigs': [ 
+                                bucket_arn, 
+                            ]
+                        }
+                    )
+            else:
+                logging.info("No WAFv2 Web ACLs to enable logging for in account " + account_number + ", region " + aws_region + ".")
+
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 
 def run_eks():
     """Function that runs the defined EKS logging code"""
     eks_logging(region_list)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-
-def run_cloudtrail():
+def run_cloudtrail(bucket_name='default'):
     """Function that runs the defined CloudTrail logging code"""
-    unique_end = random_string_generator()
-    account_number = create_bucket(unique_end)
-    check_cloudtrail(account_number, unique_end)
+    custom_bucket = True
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(unique_end)
+        custom_bucket = False
+    account_number = sts.get_caller_identity()["Account"]
+    check_cloudtrail(account_number, bucket_name, custom_bucket)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-
-def run_vpc_flow_logs():
+def run_vpc_flow_logs(bucket_name='default'):
     """Function that runs the defined VPC Flow Log logging code"""
-    unique_end = random_string_generator()
-    account_number = create_bucket(unique_end)
-    flow_log_activator(region_list, account_number, unique_end)
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(unique_end)
+    account_number = sts.get_caller_identity()["Account"]
+    flow_log_activator(region_list, account_number, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
     
-
-def run_r53_query_logs():
+def run_r53_query_logs(bucket_name='default'):
     """Function that runs the defined R53 Query Logging code"""
-    unique_end = random_string_generator()
-    account_number = create_bucket(unique_end)
-    route_53_query_logs(region_list, account_number, unique_end)
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(unique_end)
+    account_number = sts.get_caller_identity()["Account"]
+    route_53_query_logs(region_list, account_number, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_s3_logs():
@@ -639,16 +865,37 @@ def run_lb_logs():
     lb_logs(region_list, unique_end)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def lambda_handler(event, context):
+def run_guardduty(bucket_name='default'):
+    """Function that runs the defined GuardDuty enablement code and exports findings to an S3 bucket"""
+    account_number = sts.get_caller_identity()["Account"]
+    if bucket_name == 'default':
+        unique_end = random_string_generator()
+        bucket_name = create_bucket(unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    check_guardduty(region_list, account_number, bucket_name)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+def run_wafv2_logs():
+    """Function that runs the defined WAFv2 Logging code"""
+    wafv2_logs()
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+def lambda_handler(event, context, bucket_name='default'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
-    account_number = create_bucket(unique_end)
-    flow_log_activator(region_list, account_number, unique_end)
-    check_cloudtrail(account_number, unique_end)
+    account_number = sts.get_caller_identity()["Account"]
+    if bucket_name == 'default':
+        bucket_name = create_bucket(unique_end)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    flow_log_activator(region_list, account_number, bucket_name)
+    check_cloudtrail(account_number, bucket_name)
     eks_logging(region_list)
-    route_53_query_logs(region_list, account_number, unique_end)
+    route_53_query_logs(region_list, account_number, bucket_name)
     s3_logs(region_list, unique_end)
     lb_logs(region_list, unique_end)
+    wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

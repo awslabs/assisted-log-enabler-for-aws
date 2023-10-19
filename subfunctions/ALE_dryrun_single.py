@@ -204,6 +204,95 @@ def dryrun_lb_logs(region_list, account_number):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def dryrun_check_guardduty(region_list, account_number):
+    """Function to check if GuardDuty is enabled"""
+    logging.info("Creating KMS key for GuardDuty to export findings.")
+    logging.info("Creating /guardduty folder in S3 Bucket")
+    for aws_region in region_list:
+        guardduty = boto3.client('guardduty', region_name=aws_region)
+        logging.info("Checking for GuardDuty detector in the account " + account_number + ", region " + aws_region)
+        try:
+            logging.info("ListDetectors API Call")
+            detectors = guardduty.list_detectors()
+            if detectors["DetectorIds"] == []:
+                logging.info("GuardDuty is not enabled in the account" + account_number + ", region " + aws_region)
+                logging.info("Enabling GuardDuty")
+                logging.info("Exporting GuardDuty findings to an S3 bucket.")
+                logging.info("Setting S3 Bucket as publishing destination for GuardDuty detector.")
+            else:
+                logging.info("GuardDuty is already enabled in the account " + account_number + ", region " + aws_region)
+                detector_id = detectors["DetectorIds"][0]
+                logging.info("Checking if GuardDuty detector publishes findings to S3.")
+                logging.info("ListPublishingDestinations API Call")
+                gd_destinations = guardduty.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
+                if gd_destinations == []:
+                    logging.info("Detector does not publish findings to a destination. Setting S3 Bucket as publishing destination for GuardDuty detector.")
+                else:
+                    for dest in gd_destinations:
+                        if dest["DestinationType"] == "S3":
+                            dest_id = dest["DestinationId"]
+                            logging.info("DescribePublishingDestination API Call")
+                            dest_info = guardduty.describe_publishing_destination(
+                                DetectorId=detector_id,
+                                DestinationId=dest_id
+                            )
+                            dest_s3_arn = dest_info["DestinationProperties"]["DestinationArn"]
+                            logging.info("Detector already publishes findings to S3 bucket " + dest_s3_arn.split(":")[-1])
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+def dryrun_wafv2_logs(region_list, account_number):
+    """Function to check WAFv2 Logging"""
+    for aws_region in region_list:
+        wafv2 = boto3.client('wafv2', region_name=aws_region)
+        logging.info("Checking for WAFv2 Logging in the account " + account_number + ", region " + aws_region)
+        try:
+            WAFv2List: list = [] # list of all WAFv2 ARNs
+            WAFv2LogList: list = [] # list of WAFv2 ARNs with logging enabled
+            WAFv2NoLogList: list = [] # list of WAFv2 ARNs to enable logging
+
+            # Get regional WAFv2 Web ACLs
+            logging.info("ListWebAcls API Call")
+            wafv2_regional_acl_list = wafv2.list_web_acls(Scope='REGIONAL')["WebACLs"]
+            for acl in wafv2_regional_acl_list:
+                WAFv2List.append(acl["ARN"])
+            
+            if aws_region == 'us-east-1':
+                # Get CloudFront (global) WAFv2 Web ACLs
+                logging.info("Checking for Global (CloudFront) Web ACLs")
+                logging.info("ListWebAcls API Call")
+                wafv2_cf_acl_list = wafv2.list_web_acls(Scope='CLOUDFRONT')["WebACLs"]
+                for acl in wafv2_cf_acl_list:
+                    WAFv2List.append(acl["ARN"])
+            
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + ":")
+            print(WAFv2List)
+
+            logging.info("ListLoggingConfigurations API Call")
+            wafv2_regional_log_configs = wafv2.list_logging_configurations(Scope='REGIONAL')["LoggingConfigurations"]
+            for acl in wafv2_regional_log_configs:
+                WAFv2LogList.append(acl["ResourceArn"])
+            
+            if aws_region == 'us-east-1':
+                logging.info("Checking Global (CloudFront) Web ACL Logging Configurations")
+                logging.info("ListLoggingConfigurations API Call")
+                wafv2_cf_log_configs = wafv2.list_logging_configurations(Scope='CLOUDFRONT')["LoggingConfigurations"]
+                for acl in wafv2_cf_log_configs:
+                    WAFv2LogList.append(acl["ResourceArn"])
+            
+            WAFv2NoLogList = list(set(WAFv2List) - set(WAFv2LogList))
+            logging.info("List of Web ACLs found within account " + account_number + ", region " + aws_region + " WITHOUT logging enabled:")
+            print(WAFv2NoLogList)
+            
+            if WAFv2NoLogList != []:
+                for arn in WAFv2NoLogList:
+                    logging.info(arn + " does not have logging turned on. Assisted Log Enabler would enable logging.")
+            else:
+                logging.info("No WAFv2 Web ACLs to enable logging for in account " + account_number + ", region " + aws_region + ".")
+
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     dryrun_flow_log_activator(region_list, account_number)
@@ -212,6 +301,8 @@ def lambda_handler(event, context):
     dryrun_route_53_query_logs(region_list, account_number)
     dryrun_s3_logs(region_list, account_number)
     dryrun_lb_logs(region_list, account_number)
+    dryrun_check_guardduty(region_list, account_number)
+    dryrun_wafv2_logs(region_list, account_number)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 
