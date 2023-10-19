@@ -13,16 +13,11 @@ import argparse
 from botocore.exceptions import ClientError
 from datetime import timezone
 
-import sys,subprocess
-subprocess.check_call([sys.executable, '-m', 'pip', 'install','coloredlogs'])
-
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
 from subfunctions import ALE_cleanup_single
 from subfunctions import ALE_dryrun_single
 from subfunctions import ALE_dryrun_multi
-
-import coloredlogs
 
 current_date = datetime.datetime.now(tz=timezone.utc)
 current_date_string = str(current_date)
@@ -31,8 +26,8 @@ timestamp_date_string = str(timestamp_date)
 
 logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
 logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format=logFormatter)
 logger.setLevel(logging.INFO)
-coloredlogs.install(fmt=logFormatter, logger=logger)
 output_handle = logging.FileHandler('ALE_' + timestamp_date_string + '.log')
 output_handle.setLevel(logging.INFO)
 logger.addHandler(output_handle)
