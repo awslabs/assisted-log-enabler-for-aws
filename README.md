@@ -266,7 +266,7 @@ Single & Multi Account Options:
   Use these flags to choose which services you want to turn logging on for.
 
   --all                 Turns on all of the log types within the Assisted Log
-                        Enabler for AWS.
+                        Enabler for AWS (does not include GuardDuty).
   --eks                 Turns on Amazon EKS audit & authenticator logs.
   --vpcflow             Turns on Amazon VPC Flow Logs.
   --r53querylogs        Turns on Amazon Route 53 Resolver Query Logs.
@@ -277,7 +277,7 @@ Single & Multi Account Options:
   --guardduty           Turns on Amazon GuardDuty and exports findings to an
                         S3 bucket. Will used specified bucket. WARNING: This
                         creates a KMS Key to export findings.
-  --wafv2               Turns on AWS WAFv2 Logs
+  --wafv2               Turns on AWS WAFv2 Logs.
 
 Cleanup Options:
   Use these flags to choose which resources you want to turn logging off

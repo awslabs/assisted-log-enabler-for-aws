@@ -89,7 +89,7 @@ def assisted_log_enabler():
     function_parser_group.add_argument('--lblogs', action='store_true', help=' Turns on Amazon Load Balancer Logs.')
     function_parser_group.add_argument('--cloudtrail', action='store_true', help=' Turns on AWS CloudTrail. Only available in Single Account version.')
     function_parser_group.add_argument('--guardduty', action='store_true', help=' Turns on Amazon GuardDuty and exports findings to an S3 bucket. Will used specified bucket. WARNING: This creates a KMS Key to export findings.')
-    function_parser_group.add_argument('--wafv2', action='store_true', help=' Turns on AWS WAFv2 Logs')
+    function_parser_group.add_argument('--wafv2', action='store_true', help=' Turns on AWS WAFv2 Logs.')
 
     cleanup_parser_group = parser.add_argument_group('Cleanup Options', 'Use these flags to choose which resources you want to turn logging off for.')
     cleanup_parser_group.add_argument('--single_r53querylogs', action='store_true', help=' Removes Amazon Route 53 Resolver Query Log resources created by Assisted Log Enabler for AWS.')
