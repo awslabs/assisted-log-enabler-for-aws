@@ -12,10 +12,10 @@ import datetime
 import argparse
 from botocore.exceptions import ClientError
 from datetime import timezone
-import coloredlogs
 
 import sys,subprocess
 subprocess.check_call([sys.executable, '-m', 'pip', 'install','coloredlogs'])
+import coloredlogs
 
 from subfunctions import ALE_multi_account
 from subfunctions import ALE_single_account
