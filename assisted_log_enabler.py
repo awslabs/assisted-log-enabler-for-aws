@@ -64,7 +64,7 @@ def banner():
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
          Joshua "DozerCat" McKiddy - Customer Incident Response Team (AWS) -  Twitter: @jdubm31
          Cydney "StudyCat" Stude - Customer Incident Response Team (AWS) - Twitter: @cydneystude
-         Rogerio Kasa (AWS)
+         Rogerio Kasa - Security Solutions Architect (AWS)
          Andrew Yankowsky - Professional Services (AWS)
          Type -h for help.
     ''')
