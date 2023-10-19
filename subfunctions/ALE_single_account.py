@@ -894,7 +894,6 @@ def lambda_handler(event, context, bucket_name='default'):
     route_53_query_logs(region_list, account_number, bucket_name)
     s3_logs(region_list, unique_end)
     lb_logs(region_list, unique_end)
-    check_guardduty(region_list, account_number, bucket_name)
     wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
