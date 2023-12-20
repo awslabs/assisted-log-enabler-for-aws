@@ -65,7 +65,7 @@ def create_bucket(unique_end):
                 'Rules': [
                     {
                         'Expiration': {
-                            'Days': 365
+                            'Days': 400
                         },
                         'Status': 'Enabled',
                         'Prefix': '',
@@ -363,7 +363,7 @@ def s3_logs(region_list, unique_end):
                             'Rules': [
                                 {
                                     'Expiration': {
-                                        'Days': 365
+                                        'Days': 400
                                     },
                                     'Status': 'Enabled',
                                     'Prefix': '',
@@ -485,7 +485,7 @@ def lb_logs(region_list, unique_end):
                         'Rules': [
                             {
                                 'Expiration': {
-                                    'Days': 365
+                                    'Days': 400
                                 },
                                 'Status': 'Enabled',
                                 'Prefix': '',
@@ -772,7 +772,7 @@ def wafv2_logs():
                         'Rules': [
                             {
                                 'Expiration': {
-                                    'Days': 365
+                                    'Days': 400
                                 },
                                 'Status': 'Enabled',
                                 'Prefix': '',

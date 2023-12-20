@@ -175,7 +175,7 @@ The following are the details of what happens within the Assisted Log Enabler fo
 * An Amazon S3 bucket is created within the customer's account.
 * A Lifecycle Policy is created for the bucket, with the following parameters:
    * Converts files to Intelligent-Tiering storage after 90 days
-   * Deletes files after 365 days
+   * Deletes files after 400 days
 * Block Public Access is explicitly set to On for the S3 bucket created.
 * Amazon VPCs are checked to see if flow logs are turned on or off.
 * For Amazon VPCs that do not have flow logs turned on, VPC Flow Logging is turned on, and sent to the bucket created.
