@@ -720,7 +720,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
-def check_guardduty(region_list, account_number, OrgAccountIdList, organization_id, bucket_name, included_accounts, excluded_accounts):
+def check_guardduty(region_list, account_number, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts):
     """Function to turn on GuardDuty"""
     
     account_id_list = json.dumps(OrgAccountIdList)
@@ -809,9 +809,23 @@ def check_guardduty(region_list, account_number, OrgAccountIdList, organization_
                             }
                         )
                     else:
-                        logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
-
                         detector_id = detectors["DetectorIds"][0]
+                        logging.info("GetDetector API Call")
+                        if guardduty_ma.get_detector(DetectorId=detector_id)["Status"] == "DISABLED":
+                            logging.info("GuardDuty is suspended in the account " + org_account + ", region " + aws_region)
+                            logging.info("Enabling GuardDuty")
+                            logging.info("UpdateDetector API Call")
+                            guardduty_ma.update_detector(
+                                DetectorId=detector_id,
+                                Enable=True,
+                                DataSources={
+                                    "S3Logs": {"Enable": True},
+                                    "Kubernetes": {"AuditLogs": {"Enable": True}},
+                                },
+                            )
+                        else:
+                            logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
+
                         logging.info("Checking if GuardDuty detector publishes findings to S3.")
                         logging.info("ListPublishingDestinations API Call")
                         gd_destinations = guardduty_ma.list_publishing_destinations(DetectorId=detector_id)["Destinations"]
@@ -1032,7 +1046,7 @@ def run_lb_logs(included_accounts='all', excluded_accounts='none'):
 
 def run_guardduty(bucket_name='default', included_accounts='all', excluded_accounts='none'):
     """Function that runs the defined GuardDuty enablement code"""
-    OrgAccountIdList, organization_id = org_account_grab()
+    OrgAccountIdList = org_account_grab()[0]
     account_number = get_account_number()
     if bucket_name == 'default':
         unique_end = random_string_generator()
@@ -1040,7 +1054,7 @@ def run_guardduty(bucket_name='default', included_accounts='all', excluded_accou
     else:
         update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
 
-    check_guardduty(region_list, account_number, OrgAccountIdList, organization_id, bucket_name, included_accounts, excluded_accounts)
+    check_guardduty(region_list, account_number, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_wafv2_logs(included_accounts='all', excluded_accounts='none'):
