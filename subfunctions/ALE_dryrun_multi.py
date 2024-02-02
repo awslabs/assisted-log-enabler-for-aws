@@ -335,8 +335,15 @@ def dryrun_check_guardduty(region_list, OrgAccountIdList):
                     logging.info("Exporting GuardDuty findings to an S3 bucket.")
                     logging.info("Setting S3 Bucket as publishing destination for GuardDuty detector.")
                 else:
-                    logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
                     detector_id = detectors["DetectorIds"][0]
+                    logging.info("GetDetector API Call")
+                    if guardduty_ma.get_detector(DetectorId=detector_id)["Status"] == "DISABLED":
+                        logging.info("GuardDuty is suspended in the account " + org_account + ", region " + aws_region)
+                        logging.info("Enabling GuardDuty")
+                        logging.info("UpdateDetector API Call")
+                    else:
+                        logging.info("GuardDuty is already enabled in the account " + org_account + ", region " + aws_region)
+
                     logging.info("Checking if GuardDuty detector publishes findings to S3.")
                     logging.info("ListPublishingDestinations API Call")
                     gd_destinations = guardduty_ma.list_publishing_destinations(DetectorId=detector_id)["Destinations"]

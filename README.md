@@ -74,7 +74,9 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 "s3:PutBucketLifecycleConfiguration",
 "guardduty:ListDetectors",
 "guardduty:TagResource",
+"guardduty:GetDetector",
 "guardduty:CreateDetector",
+"guardduty:UpdateDetector",
 "guardduty:ListPublishingDestinations",
 "guardduty:CreatePublishingDestination",
 "guardduty:DescribePublishingDestination",
@@ -145,8 +147,10 @@ The following permissions are needed within AWS IAM for Assisted Log Enabler for
 
 # For enabling GuardDuty and export findings:
 "guardduty:ListDetectors",
+"guardduty:GetDetector",
 "guardduty:TagResource",
 "guardduty:CreateDetector",
+"guardduty:UpdateDetector",
 "guardduty:ListPublishingDestinations",
 "guardduty:CreatePublishingDestination",
 "guardduty:DescribePublishingDestination",
@@ -219,6 +223,9 @@ python3 assisted_log_enabler.py
 ██      ██  ██ ██ ██   ██ ██   ██ ██      ██      ██   ██   
 ███████ ██   ████ ██   ██ ██████  ███████ ███████ ██   ██ 
          Joshua "DozerCat" McKiddy - Customer Incident Response Team (CIRT) - AWS
+         Cydney "StudyCat" Stude - Customer Incident Response Team (AWS) - Twitter: @cydneystude
+         Rogerio Kasa - Security Solutions Architect (AWS)
+         Andrew Yankowsky - Professional Services (AWS)
          Twitter: @jdubm31
          Type -h for help.
 
