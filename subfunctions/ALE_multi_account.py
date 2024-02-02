@@ -92,7 +92,7 @@ def create_bucket(OrgAccountIdList, account_number, unique_end):
                 'Rules': [
                     {
                         'Expiration': {
-                            'Days': 365
+                            'Days': 400
                         },
                         'Status': 'Enabled',
                         'Prefix': '',
@@ -444,7 +444,7 @@ def s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_
                                     'Rules': [
                                         {
                                             'Expiration': {
-                                                'Days': 365
+                                                'Days': 400
                                             },
                                             'Status': 'Enabled',
                                             'Prefix': '',
@@ -596,7 +596,7 @@ def lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_
                                 'Rules': [
                                     {
                                         'Expiration': {
-                                            'Days': 365
+                                            'Days': 400
                                         },
                                         'Status': 'Enabled',
                                         'Prefix': '',
@@ -941,7 +941,7 @@ def wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_ac
                                 'Rules': [
                                     {
                                         'Expiration': {
-                                            'Days': 365
+                                            'Days': 400
                                         },
                                         'Status': 'Enabled',
                                         'Prefix': '',
