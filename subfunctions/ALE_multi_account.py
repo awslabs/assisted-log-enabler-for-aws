@@ -223,7 +223,8 @@ def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_acco
                                     },
                                 ]
                             }
-                        ]
+                        ],
+                        DestinationOptions={'FileFormat':'parquet'}
                     )
                     logging.info("VPC Flow Logs are turned on for account " + org_account + ".")
                 except Exception as exception_handle:

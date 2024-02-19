@@ -158,7 +158,8 @@ def flow_log_activator(region_list, account_number, bucket_name):
                             },
                         ]
                     }
-                ]
+                ],
+                DestinationOptions={'FileFormat':'parquet'}
             )
             # Custom format specified in same order as documentation lists them at https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
             logging.info("VPC Flow Logs are turned on.")
