@@ -115,7 +115,7 @@ def update_custom_bucket_policy(bucket_name, account_number):
         )
 
 # 2. Find VPCs and turn flow logs on if not on already.
-def flow_log_activator(region_list, account_number, bucket_name):
+def flow_log_activator(region_list, account_number, bucket_name, file_format):
     """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
     for aws_region in region_list:
         ec2 = boto3.client('ec2', region_name=aws_region)
@@ -140,6 +140,7 @@ def flow_log_activator(region_list, account_number, bucket_name):
                 logging.info(no_logs + " does not have VPC Flow logging on. It will be turned on within this function.")
             logging.info("Activating logs for VPCs that do not have them turned on.")
             logging.info("If all VPCs have Flow Logs turned on, you will get an MissingParameter error. That is normal.")
+            logging.info("Creating FlowLos using " + file_format + " file format.")
             logging.info("CreateFlowLogs API Call")
             flow_log_on =  ec2.create_flow_logs(
                 ResourceIds=working_list,
@@ -159,7 +160,7 @@ def flow_log_activator(region_list, account_number, bucket_name):
                         ]
                     }
                 ],
-                DestinationOptions={'FileFormat':'parquet'}
+                DestinationOptions={'FileFormat':file_format}
             )
             # Custom format specified in same order as documentation lists them at https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
             logging.info("VPC Flow Logs are turned on.")
@@ -851,13 +852,13 @@ def run_cloudtrail(bucket_name='default'):
     check_cloudtrail(account_number, bucket_name, custom_bucket)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def run_vpc_flow_logs(bucket_name='default'):
+def run_vpc_flow_logs(bucket_name='default', file_format='text'):
     """Function that runs the defined VPC Flow Log logging code"""
     if bucket_name == 'default':
         unique_end = random_string_generator()
         bucket_name = create_bucket(unique_end)
     account_number = sts.get_caller_identity()["Account"]
-    flow_log_activator(region_list, account_number, bucket_name)
+    flow_log_activator(region_list, account_number, bucket_name,file_format)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
     
 def run_r53_query_logs(bucket_name='default'):
