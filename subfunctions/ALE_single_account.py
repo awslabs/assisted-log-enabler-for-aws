@@ -118,6 +118,7 @@ def update_custom_bucket_policy(bucket_name, account_number):
 def flow_log_activator(region_list, account_number, bucket_name, file_format):
     """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
     for aws_region in region_list:
+        logging.info("Turning on VPC Flow Logs. Flow logs will be stored as" + file_format)
         ec2 = boto3.client('ec2', region_name=aws_region)
         logging.info("Creating a list of VPCs without Flow Logs on in region " + aws_region + ".")
         try:
@@ -140,7 +141,6 @@ def flow_log_activator(region_list, account_number, bucket_name, file_format):
                 logging.info(no_logs + " does not have VPC Flow logging on. It will be turned on within this function.")
             logging.info("Activating logs for VPCs that do not have them turned on.")
             logging.info("If all VPCs have Flow Logs turned on, you will get an MissingParameter error. That is normal.")
-            logging.info("Creating FlowLos using " + file_format + " file format.")
             logging.info("CreateFlowLogs API Call")
             flow_log_on =  ec2.create_flow_logs(
                 ResourceIds=working_list,
@@ -898,7 +898,7 @@ def run_wafv2_logs():
     wafv2_logs()
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def lambda_handler(event, context, bucket_name='default'):
+def lambda_handler(event, context, bucket_name='default', file_format='text'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
     account_number = sts.get_caller_identity()["Account"]
