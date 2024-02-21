@@ -118,7 +118,7 @@ def update_custom_bucket_policy(bucket_name, account_number):
 def flow_log_activator(region_list, account_number, bucket_name, file_format):
     """Function that turns on the VPC Flow Logs, for VPCs identifed without them"""
     for aws_region in region_list:
-        logging.info("Turning on VPC Flow Logs. Flow logs will be stored as" + file_format)
+        logging.info("Turning on VPC Flow Logs. Flow logs will be stored as " + file_format)
         ec2 = boto3.client('ec2', region_name=aws_region)
         logging.info("Creating a list of VPCs without Flow Logs on in region " + aws_region + ".")
         try:
@@ -906,7 +906,7 @@ def lambda_handler(event, context, bucket_name='default', file_format='text'):
         bucket_name = create_bucket(unique_end)
     else:
         update_custom_bucket_policy(bucket_name, account_number)
-    flow_log_activator(region_list, account_number, bucket_name)
+    flow_log_activator(region_list, account_number, bucket_name, file_format)
     check_cloudtrail(account_number, bucket_name)
     eks_logging(region_list)
     route_53_query_logs(region_list, account_number, bucket_name)

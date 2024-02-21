@@ -163,7 +163,7 @@ def update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList):
 # 4. Find VPCs and turn flow logs on if not on already.
 def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts, file_format):
     """Function to define the list of VPCs without logging turned on"""
-    logging.info("Turning on VPC Flow Logs. Flow logs will be stored as" + file_format)
+    logging.info("Turning on VPC Flow Logs. Flow logs will be stored as " + file_format)
     logging.info("Creating a list of VPCs without Flow Logs on.")
     for org_account in OrgAccountIdList:
         if excluded_accounts != 'none' and org_account in excluded_accounts:
