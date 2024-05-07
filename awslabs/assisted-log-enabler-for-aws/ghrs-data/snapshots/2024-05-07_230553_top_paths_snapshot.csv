@@ -1,0 +1,11 @@
+url_path,views_total,views_unique
+/awslabs/assisted-log-enabler-for-aws,105,55
+/awslabs/assisted-log-enabler-for-aws/blob/main/README.md,58,7
+/awslabs/assisted-log-enabler-for-aws/blob/main/CODE_OF_CONDUCT.md,56,5
+/awslabs/assisted-log-enabler-for-aws/blob/main/CHANGELOG.md,52,4
+/awslabs/assisted-log-enabler-for-aws/blob/main/CONTRIBUTING.md,52,4
+/awslabs/assisted-log-enabler-for-aws/blob/main/assisted_log_enabler.py,35,5
+/awslabs/assisted-log-enabler-for-aws/blob/main/THIRD-PARTY,32,5
+/awslabs/assisted-log-enabler-for-aws/blob/main/permissions/ALE_child_account_role.yaml,30,5
+/awslabs/assisted-log-enabler-for-aws/activity,28,4
+/awslabs/assisted-log-enabler-for-aws/blob/main/diagrams/assisted_log_enabler_lb.png,28,4
