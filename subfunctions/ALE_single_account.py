@@ -841,13 +841,13 @@ def run_eks():
 
 def run_cloudtrail(bucket_name='default'):
     """Function that runs the defined CloudTrail logging code"""
-    custom_bucket = True
+    account_number = sts.get_caller_identity()["Account"]
     if bucket_name == 'default':
         unique_end = random_string_generator()
         bucket_name = create_bucket(unique_end)
-        custom_bucket = False
-    account_number = sts.get_caller_identity()["Account"]
-    check_cloudtrail(account_number, bucket_name, custom_bucket)
+    else:
+        update_custom_bucket_policy(bucket_name, account_number)
+    check_cloudtrail(account_number, bucket_name)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 def run_vpc_flow_logs(bucket_name='default'):
