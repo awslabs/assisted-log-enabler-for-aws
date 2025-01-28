@@ -161,8 +161,9 @@ def update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList):
         )
 
 # 4. Find VPCs and turn flow logs on if not on already.
-def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts):
+def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts, file_format):
     """Function to define the list of VPCs without logging turned on"""
+    logging.info("Turning on VPC Flow Logs. Flow logs will be stored as " + file_format)
     logging.info("Creating a list of VPCs without Flow Logs on.")
     for org_account in OrgAccountIdList:
         if excluded_accounts != 'none' and org_account in excluded_accounts:
@@ -223,7 +224,8 @@ def flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_acco
                                     },
                                 ]
                             }
-                        ]
+                        ],
+                        DestinationOptions={'FileFormat':file_format}
                     )
                     logging.info("VPC Flow Logs are turned on for account " + org_account + ".")
                 except Exception as exception_handle:
@@ -1001,7 +1003,7 @@ def run_eks(included_accounts='all', excluded_accounts='none'):
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 
-def run_vpc_flow_logs(bucket_name='default', included_accounts='all', excluded_accounts='none'):
+def run_vpc_flow_logs(bucket_name='default', included_accounts='all', excluded_accounts='none',file_format='text'):
     """Function that runs the defined VPC Flow Log logging code"""
     OrgAccountIdList, organization_id = org_account_grab()
     account_number = get_account_number()
@@ -1063,7 +1065,7 @@ def run_wafv2_logs(included_accounts='all', excluded_accounts='none'):
     wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
-def lambda_handler(event, context, bucket_name='default', included_accounts='all', excluded_accounts='none'):
+def lambda_handler(event, context, bucket_name='default', included_accounts='all', excluded_accounts='none', file_format='text'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
     account_number = get_account_number()
@@ -1072,7 +1074,7 @@ def lambda_handler(event, context, bucket_name='default', included_accounts='all
         bucket_name = create_bucket(OrgAccountIdList, account_number, unique_end)
     else:
         update_custom_bucket_policy(bucket_name, account_number, OrgAccountIdList)
-    flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts)
+    flow_log_activator(OrgAccountIdList, region_list, bucket_name, included_accounts, excluded_accounts, file_format)
     eks_logging(region_list, OrgAccountIdList, included_accounts, excluded_accounts)
     route_53_query_logs(region_list, OrgAccountIdList, bucket_name, included_accounts, excluded_accounts)
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)

@@ -80,9 +80,9 @@ def assisted_log_enabler():
     parser.add_argument('--exclude_accounts', metavar='ACCOUNT_NUMBERS', help=' Specify a comma separated list of AWS account numbers to EXCLUDE for multi_account mode.')
 
     function_parser_group = parser.add_argument_group('Single & Multi Account Options', 'Use these flags to choose which services you want to turn logging on for.')
-    function_parser_group.add_argument('--all', action='store_true', help=' Turns on all of the log types within the Assisted Log Enabler for AWS (does not include GuardDuty).')
+    function_parser_group.add_argument('--all', choices=['text','parquet'], help=' Turns on all of the log types within the Assisted Log Enabler for AWS (does not include GuardDuty).\nYou must select \'text\' or \'parquet\' as the log storage format for VPC Flow Logs.')
     function_parser_group.add_argument('--eks', action='store_true', help=' Turns on Amazon EKS audit & authenticator logs.')
-    function_parser_group.add_argument('--vpcflow', action='store_true', help=' Turns on Amazon VPC Flow Logs.')
+    function_parser_group.add_argument('--vpcflow', choices=['text','parquet'], help=' Turns on Amazon VPC Flow Logs. Choose \'text\' or \'parquet\' as the format to store the flow logs.')
     function_parser_group.add_argument('--r53querylogs', action='store_true', help=' Turns on Amazon Route 53 Resolver Query Logs.')
     function_parser_group.add_argument('--s3logs', action='store_true', help=' Turns on Amazon Bucket Logs.')
     function_parser_group.add_argument('--lblogs', action='store_true', help=' Turns on Amazon Load Balancer Logs.')
@@ -113,12 +113,16 @@ def assisted_log_enabler():
     included_accounts = 'all'
     excluded_accounts = 'none'
     if args.mode == 'single_account':
+
+
+
+
         if args.bucket:
             bucket_name = args.bucket
         if args.eks:
             ALE_single_account.run_eks()
         elif args.vpcflow:
-            ALE_single_account.run_vpc_flow_logs(bucket_name)
+            ALE_single_account.run_vpc_flow_logs(bucket_name,args.vpcflow)
         elif args.r53querylogs:
             ALE_single_account.run_r53_query_logs(bucket_name)
         elif args.s3logs:
@@ -132,7 +136,7 @@ def assisted_log_enabler():
         elif args.wafv2:
             ALE_single_account.run_wafv2_logs()
         elif args.all:
-            ALE_single_account.lambda_handler(event, context, bucket_name)
+            ALE_single_account.lambda_handler(event, context, bucket_name, args.all)
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'multi_account':
@@ -158,7 +162,7 @@ def assisted_log_enabler():
         if args.eks:
             ALE_multi_account.run_eks(included_accounts, excluded_accounts)
         elif args.vpcflow:
-            ALE_multi_account.run_vpc_flow_logs(bucket_name, included_accounts, excluded_accounts)
+            ALE_multi_account.run_vpc_flow_logs(bucket_name, included_accounts, excluded_accounts, args.vpc_flow)
         elif args.r53querylogs:
             ALE_multi_account.run_r53_query_logs(bucket_name, included_accounts, excluded_accounts)
         elif args.s3logs:
@@ -170,7 +174,7 @@ def assisted_log_enabler():
         elif args.wafv2:
             ALE_multi_account.run_wafv2_logs(included_accounts, excluded_accounts)
         elif args.all:
-            ALE_multi_account.lambda_handler(event, context, bucket_name, included_accounts, excluded_accounts)
+            ALE_multi_account.lambda_handler(event, context, bucket_name, included_accounts, excluded_accounts, args.all)
         else:
             logging.info("No valid option selected. Please run with -h to display valid options.")
     elif args.mode == 'cleanup':
