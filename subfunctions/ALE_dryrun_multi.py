@@ -434,6 +434,58 @@ def dryrun_wafv2_logs(region_list, OrgAccountIdList):
                     logging.error(exception_handle)
 
 
+def dryrun_check_bedrock_logging(region_list, OrgAccountIdList):
+    """Function to check if Bedrock Model Invocation Logging is enabled"""
+    for org_account in OrgAccountIdList:
+        for aws_region in region_list:
+            logging.info("Checking for Bedrock Model Invocation Logging in account " + org_account + ", region " + aws_region + ".")
+            sts = boto3.client('sts')
+            RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+            logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+            assisted_log_enabler_sts = sts.assume_role(
+                RoleArn=RoleArn,
+                RoleSessionName='assisted-log-enabler-activation',
+                DurationSeconds=3600,
+            )
+            bedrock_ma = boto3.client(
+            'bedrock',
+            aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+            aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+            aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+            region_name=aws_region
+            )
+            try:
+                logging.info("GetModelInvocationLoggingConfiguration API Call")
+                logging_config = bedrock_ma.get_model_invocation_logging_configuration()
+                if 'loggingConfig' not in logging_config:
+                    logging.info("Bedrock Model Invocation Logging is NOT enabled in account " + org_account + ", region " + aws_region)
+                else:
+                    config = logging_config['loggingConfig']
+                    has_s3 = 's3Config' in config and config['s3Config'].get('bucketName')
+                    has_cloudwatch = 'cloudWatchConfig' in config and config['cloudWatchConfig'].get('logGroupName')
+                    if has_s3 and has_cloudwatch:
+                        s3_bucket = config['s3Config'].get('bucketName', 'unknown')
+                        log_group = config['cloudWatchConfig'].get('logGroupName', 'unknown')
+                        logging.info("Bedrock Model Invocation Logging is enabled in account " + org_account + ", region " + aws_region + ". Logging to S3 bucket: " + s3_bucket + " and CloudWatch log group: " + log_group)
+                    elif has_s3:
+                        s3_bucket = config['s3Config'].get('bucketName', 'unknown')
+                        logging.info("Bedrock Model Invocation Logging is enabled in account " + org_account + ", region " + aws_region + ". Logging to S3 bucket: " + s3_bucket + ". No CloudWatch destination configured.")
+                    elif has_cloudwatch:
+                        log_group = config['cloudWatchConfig'].get('logGroupName', 'unknown')
+                        logging.info("Bedrock Model Invocation Logging is enabled in account " + org_account + ", region " + aws_region + ". Logging to CloudWatch log group: " + log_group + ". No S3 destination configured.")
+                    else:
+                        logging.info("Bedrock Model Invocation Logging is NOT enabled in account " + org_account + ", region " + aws_region)
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'UnrecognizedClientException':
+                    logging.info("Bedrock is not available in region " + aws_region + ". Skipping.")
+                elif e.response['Error']['Code'] == 'AccessDeniedException':
+                    logging.info("Bedrock is not accessible in account " + org_account + ", region " + aws_region + ". Skipping.")
+                else:
+                    logging.error(e)
+            except Exception as exception_handle:
+                logging.error(exception_handle)
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     account_number = get_account_number()
@@ -445,6 +497,7 @@ def lambda_handler(event, context):
     dryrun_lb_logs(region_list, account_number, OrgAccountIdList)
     dryrun_check_guardduty(region_list, OrgAccountIdList)
     dryrun_wafv2_logs(region_list, OrgAccountIdList)
+    dryrun_check_bedrock_logging(region_list,OrgAccountIdList)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 

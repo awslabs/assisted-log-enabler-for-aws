@@ -83,6 +83,8 @@ Resources:
               - wafv2:ListWebACLs
               - wafv2:ListLoggingConfigurations
               - wafv2:PutLoggingConfiguration
+              - bedrock:GetModelInvocationLoggingConfiguration
+              - bedrock:PutModelInvocationLoggingConfiguration
             Resource: '*'
             Condition:
               StringEquals:
