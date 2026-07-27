@@ -996,6 +996,112 @@ def wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_ac
                 except Exception as exception_handle:
                     logging.error(exception_handle)
 
+def bedrock_logs(region_list, OrgAccountIdList, unique_end, included_accounts, excluded_accounts):
+    """Function to turn on Bedrock Model Invocation Logging"""
+    for org_account in OrgAccountIdList:
+        if excluded_accounts != 'none' and org_account in excluded_accounts:
+            continue
+        elif included_accounts == 'all' or org_account in included_accounts:
+            for aws_region in region_list:
+                logging.info("Checking Bedrock Model Invocation Logging in account " + org_account + ", region " + aws_region + ".")
+                sts = boto3.client('sts')
+                RoleArn = 'arn:aws:iam::%s:role/Assisted_Log_Enabler_IAM_Role' % org_account
+                logging.info('Assuming Target Role %s for Assisted Log Enabler...' % RoleArn)
+                assisted_log_enabler_sts = sts.assume_role(
+                    RoleArn=RoleArn,
+                    RoleSessionName='assisted-log-enabler-activation',
+                    DurationSeconds=3600,
+                )
+                bedrock_ma = boto3.client(
+                'bedrock',
+                aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+                aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+                region_name=aws_region
+                )
+                s3_ma = boto3.client(
+                's3',
+                aws_access_key_id=assisted_log_enabler_sts['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assisted_log_enabler_sts['Credentials']['SecretAccessKey'],
+                aws_session_token=assisted_log_enabler_sts['Credentials']['SessionToken'],
+                region_name=aws_region
+                )
+                try:
+                    logging.info("GetModelInvocationLoggingConfiguration API Call")
+                    logging_config = bedrock_ma.get_model_invocation_logging_configuration()
+                    if 'loggingConfig' in logging_config and logging_config['loggingConfig'].get('s3Config', {}).get('bucketName'):
+                        existing_bucket = logging_config['loggingConfig']['s3Config']['bucketName']
+                        logging.info("Bedrock Model Invocation Logging is already enabled in account " + org_account + ", region " + aws_region + ". Logging to S3 bucket: " + existing_bucket + ". No action needed.")
+                    else:
+                        logging.info("Bedrock Model Invocation Logging is NOT enabled in account " + org_account + ", region " + aws_region + ". Enabling now.")
+                        bucket_name = "aws-bedrock-logs-" + org_account + "-" + aws_region + "-" + unique_end
+                        logging.info("CreateBucket API Call")
+                        if aws_region == 'us-east-1':
+                            s3_ma.create_bucket(Bucket=bucket_name)
+                        else:
+                            s3_ma.create_bucket(
+                                Bucket=bucket_name,
+                                CreateBucketConfiguration={'LocationConstraint': aws_region}
+                            )
+                        logging.info("Bucket " + bucket_name + " Created.")
+                        logging.info("PutBucketLifecycleConfiguration API Call")
+                        s3_ma.put_bucket_lifecycle_configuration(
+                            Bucket=bucket_name,
+                            LifecycleConfiguration={
+                                'Rules': [
+                                    {
+                                        'Expiration': {'Days': 400},
+                                        'Status': 'Enabled',
+                                        'Prefix': '',
+                                        'ID': 'LogStorage',
+                                        'Transitions': [
+                                            {'Days': 90, 'StorageClass': 'INTELLIGENT_TIERING'}
+                                        ]
+                                    }
+                                ]
+                            }
+                        )
+                        logging.info("PutBucketPolicy API Call")
+                        s3_ma.put_bucket_policy(
+                            Bucket=bucket_name,
+                            Policy='{ "Version": "2012-10-17", "Statement": [ { "Sid": "AWSBedrockLogDelivery", "Effect": "Allow", "Principal": { "Service": "bedrock.amazonaws.com" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:::' + bucket_name + '/bedrock/*", "Condition": { "StringEquals": { "aws:SourceAccount": "' + org_account + '" } } }, { "Sid": "AWSBedrockGetBucketLocation", "Effect": "Allow", "Principal": { "Service": "bedrock.amazonaws.com" }, "Action": "s3:GetBucketLocation", "Resource": "arn:aws:s3:::' + bucket_name + '" } ] }'
+                        )
+                        logging.info("PutPublicAccessBlock API Call")
+                        s3_ma.put_public_access_block(
+                            Bucket=bucket_name,
+                            PublicAccessBlockConfiguration={
+                                'BlockPublicAcls': True,
+                                'IgnorePublicAcls': True,
+                                'BlockPublicPolicy': True,
+                                'RestrictPublicBuckets': True
+                            }
+                        )
+                        logging.info("PutModelInvocationLoggingConfiguration API Call")
+                        bedrock_ma.put_model_invocation_logging_configuration(
+                            loggingConfig={
+                                's3Config': {
+                                    'bucketName': bucket_name,
+                                    'keyPrefix': 'bedrock'
+                                },
+                                'textDataDeliveryEnabled': True,
+                                'imageDataDeliveryEnabled': True,
+                                'embeddingDataDeliveryEnabled': True
+                            }
+                        )
+                        logging.info("Bedrock Model Invocation Logging enabled in account " + org_account + ", region " + aws_region + ". Logging to S3 bucket: " + bucket_name)
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'UnrecognizedClientException':
+                        logging.info("Bedrock is not available in region " + aws_region + ". Skipping.")
+                    elif e.response['Error']['Code'] == 'AccessDeniedException':
+                        logging.info("Bedrock is not accessible in account " + org_account + ", region " + aws_region + ". Skipping.")
+                    elif e.response['Error']['Code'] == 'ValidationException':
+                        logging.error("Bedrock in account " + org_account + ", region " + aws_region + " cannot write to bucket. Check bucket policy and region.")
+                    else:
+                        logging.error(e)
+                except Exception as exception_handle:
+                    logging.error(exception_handle)
+
+
 def run_eks(included_accounts='all', excluded_accounts='none'):
     """Function that runs the defined EKS logging code"""
     OrgAccountIdList, organization_id = org_account_grab()
@@ -1065,6 +1171,14 @@ def run_wafv2_logs(included_accounts='all', excluded_accounts='none'):
     wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
+def run_bedrock_logs(included_accounts='all', excluded_accounts='none'):
+    """Function that runs the defined Bedrock logging code"""
+    unique_end = random_string_generator()
+    OrgAccountIdList, organization_id = org_account_grab()
+    bedrock_logs(region_list, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
+    logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
+
+
 def lambda_handler(event, context, bucket_name='default', included_accounts='all', excluded_accounts='none', file_format='text'):
     """Function that runs all of the previously defined functions"""
     unique_end = random_string_generator()
@@ -1080,6 +1194,7 @@ def lambda_handler(event, context, bucket_name='default', included_accounts='all
     s3_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     lb_logs(region_list, account_number, OrgAccountIdList, unique_end, included_accounts, excluded_accounts)
     wafv2_logs(OrgAccountIdList, organization_id, included_accounts, excluded_accounts)
+    bedrock_logs(region_list,OrgAccountIdList,unique_end,included_accounts,excluded_accounts)
     logging.info("This is the end of the script. Please feel free to validate that logs have been turned on.")
 
 

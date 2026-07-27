@@ -40,11 +40,13 @@
                 "elb:ModifyLoadBalancerAttributes",
                 "elbv2:DescribeLoadBalancers",
                 "elbv2:DescribeLoadBalancerAttributes",
-                "elbv2:ModifyLoadBalancerAttributes"
+                "elbv2:ModifyLoadBalancerAttributes",
                 "elasticloadbalancing:DescribeLoadBalancers",
                 "elasticloadbalancing:DescribeLoadBalancerAttributes",
                 "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "eks:ListClusters"
+                "eks:ListClusters",
+                "bedrock:GetModelInvocationLoggingConfiguration",
+                "bedrock:PutModelInvocationLoggingConfiguration"
             ],
             "Resource": "*",
             "Condition": {
