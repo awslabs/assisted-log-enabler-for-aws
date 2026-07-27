@@ -370,6 +370,39 @@ def waf_cleanup():
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+
+def bedrock_cleanup():
+    """Function to clean up Bedrock Model Invocation Logging"""
+    logging.info("Cleaning up Bedrock Model Invocation Logging created by Assisted Log Enabler for AWS.")
+    for aws_region in region_list:
+        bedrock = boto3.client('bedrock', region_name=aws_region)
+        try:
+            logging.info("---- LINE BREAK BETWEEN REGIONS ----")
+            logging.info("Checking Bedrock Model Invocation Logging in region " + aws_region + ".")
+            logging.info("GetModelInvocationLoggingConfiguration API Call")
+            logging_config = bedrock.get_model_invocation_logging_configuration()
+            if 'loggingConfig' in logging_config and logging_config['loggingConfig'].get('s3Config', {}).get('bucketName'):
+                bucket_name = logging_config['loggingConfig']['s3Config']['bucketName']
+                if 'aws-bedrock-logs-' in bucket_name:
+                    logging.info("Bedrock Model Invocation Logging was enabled by Assisted Log Enabler in region " + aws_region + ". Disabling now.")
+                    logging.info("DeleteModelInvocationLoggingConfiguration API Call")
+                    bedrock.delete_model_invocation_logging_configuration()
+                    logging.info("Bedrock Model Invocation Logging disabled in region " + aws_region + ".")
+                else:
+                    logging.info("Bedrock Model Invocation Logging in region " + aws_region + " was not created by Assisted Log Enabler. Skipping.")
+            else:
+                logging.info("Bedrock Model Invocation Logging is not enabled in region " + aws_region + ". No action needed.")
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'UnrecognizedClientException':
+                logging.info("Bedrock is not available in region " + aws_region + ". Skipping.")
+            elif e.response['Error']['Code'] == 'AccessDeniedException':
+                logging.info("Bedrock is not accessible in region " + aws_region + ". Skipping.")
+            else:
+                logging.error(e)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
+
 def run_vpcflow_cleanup():
     """Function to run the vpcflow_cleanup function"""
     vpcflow_cleanup()
@@ -405,6 +438,12 @@ def run_wafv2_cleanup():
     waf_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
+def run_bedrock_cleanup():
+    """Function to run the bedrock_cleanup function"""
+    bedrock_cleanup()
+    logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
+
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     r53_cleanup()
@@ -414,6 +453,7 @@ def lambda_handler(event, context):
     lb_cleanup()
     guardduty_cleanup()
     waf_cleanup()
+    bedrock_cleanup()
     logging.info("This is the end of the script. Please feel free to validate that logging resources have been cleaned up.")
 
 

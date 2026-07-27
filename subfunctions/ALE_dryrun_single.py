@@ -300,6 +300,40 @@ def dryrun_wafv2_logs(region_list, account_number):
         except Exception as exception_handle:
             logging.error(exception_handle)
 
+def dryrun_check_bedrock_logging(region_list,account_number):
+    """ Function to check if Bedrock Model Invocation Logging is enabled"""
+    for aws_region in region_list:
+        bedrock=boto3.client('bedrock',region_name=aws_region)
+        logging.info("Checking for Bedrock Model Invocation logging in the account " + account_number + ", region " + aws_region)
+        try:
+            logging.info("GetModelInvocationLoggingConfiguration API Call")
+            logging_config = bedrock.get_model_invocation_logging_configuration()
+            if 'loggingConfig' not in logging_config:
+                logging.info('Bedrock Model Invocation Logging is not enabled in account ' + account_number + " in region " + aws_region )
+            else:
+                config = logging_config['loggingConfig']
+                has_s3 = 's3Config' in config and config['s3Config'].get('bucketName')
+                has_cloudwatch= 'cloudWatchConfig' in config and config['cloudWatchConfig'].get('logGroupName')
+                if has_s3 and has_cloudwatch:
+                    s3_bucket = config['s3Config'].get("bucketName","unknown")
+                    log_group = config['cloudWatchConfig'].get('logGroupName','unknown')
+                    logging.info("Bedrock Model Invocation Logging is enabled in region " + aws_region + ". Logging to S3 bucket: " + s3_bucket + " and CloudWatch log group: " + log_group)
+                elif has_s3:
+                    s3_bucket= config['s3Config'].get('bucketName','unknown')
+                    logging.info("Bedrock Model Invocation Logging is enabled in region " + aws_region + ". Logging to S3 bucket: " + s3_bucket + ". No CloudWatch destination is enabled")
+                elif has_cloudwatch:
+                    log_group = config['CloudWatchConfig'].get('logGroupName','unknown')
+                    logging.info("Bedrock Model Invocation Logging is enabled in region " + aws_region + ". Logging to CloudWatch log group: " + log_group + ". No S3 destination configured")
+                else:
+                    logging.info("Bedrock Model Invocation Logging is NOT enabled in region " + aws_region)
+        except bedrock.exceptions.AccessDeniedException:
+            logging.info("Bedrock is not available or not accessible in region " + aws_region + ". Skipping.")
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'UnrecognizedClientException':
+                logging.info("Bedrock is not available in region " + aws_region)
+        except Exception as exception_handle:
+            logging.error(exception_handle)
+
 def lambda_handler(event, context):
     """Function that runs all of the previously defined functions"""
     dryrun_flow_log_activator(region_list, account_number)
@@ -310,6 +344,7 @@ def lambda_handler(event, context):
     dryrun_lb_logs(region_list, account_number)
     dryrun_check_guardduty(region_list, account_number)
     dryrun_wafv2_logs(region_list, account_number)
+    dryrun_check_bedrock_logging(region_list,account_number)
     logging.info("This is the end of the script. Please check the logs for the resources that would be turned on outside of the Dry Run option.")
 
 
